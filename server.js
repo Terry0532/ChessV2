@@ -26,7 +26,7 @@ app.get("*", (req, res) => {
 // server.listen(PORT, "0.0.0.0");
 server.listen(PORT);
 // server.listen(4444, process.env.OPENSHIFT_NODEJS_IP || process.env.IP || '127.0.0.1')
-console.log("listening to : " + HOST + ":" + PORT);
+console.log("listening to port : " + PORT);
 
 io.on("connection", client => {
     console.log("connected : " + client.id);

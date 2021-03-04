@@ -313,17 +313,18 @@ export default class Game extends React.Component {
             //to convert pawn that reach other side of the chess board
             if ([10, 11, 12, 13, 50, 51, 52, 53].includes(i)) {
                 //dehighlight
-                if (this.state.turn === "black") {
+                if (this.state.turn === "white") {
                     squares[10].style = { ...squares[10].style, backgroundColor: "" };
                     squares[11].style = { ...squares[11].style, backgroundColor: "" };
                     squares[12].style = { ...squares[12].style, backgroundColor: "" };
                     squares[13].style = { ...squares[13].style, backgroundColor: "" };
-                } else if (this.state.turn === "white") {
+                } else if (this.state.turn === "black") {
                     squares[50].style = { ...squares[50].style, backgroundColor: "" };
                     squares[51].style = { ...squares[51].style, backgroundColor: "" };
                     squares[52].style = { ...squares[52].style, backgroundColor: "" };
                     squares[53].style = { ...squares[53].style, backgroundColor: "" };
                 }
+                this.changeTurn();
                 //convert pawn to player selected piece
                 const newSquares = this.state.tempSquares;
                 newSquares[this.state.convertPawnPosition] = squares[i];
@@ -401,7 +402,6 @@ export default class Game extends React.Component {
                         }
                         this.addToFallenSoldierList(i, squares, whiteFallenSoldiers, blackFallenSoldiers);
                         squares = this.movePiece(i, squares, this.state.sourceSelection);
-                        this.changeTurn();
                         //update the possible moves in order to check if next player can castle or not
                         const allPossibleMovesWhite = this.allPossibleMovesWhite(squares);
                         const allPossibleMovesBlack = this.allPossibleMovesBlack(squares);
@@ -437,7 +437,9 @@ export default class Game extends React.Component {
                                 highLightMoves: [],
                                 convertPawnPosition: i
                             });
+                            this.state.socket.emit("moves", { gameId: this.state.gameId, "i": i, changeTurn: false, userId: this.state.userId, check: check });
                         } else {
+                            this.changeTurn();
                             this.setState({
                                 sourceSelection: -1,
                                 squares: squares,
