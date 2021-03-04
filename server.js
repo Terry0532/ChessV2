@@ -13,11 +13,6 @@ let sockets = {};
 let players = {};
 let games = {};
 
-// app.use(express.static(path.join(__dirname, './client/build')));
-// app.get('/', (req, res, next) => {
-//     res.sendFile(path.join(__dirname, "./client/build/index.html"));
-// });
-
 app.use(express.static(path.join(__dirname, "client", "build")))
 app.get("*", (req, res) => {
     res.sendFile(path.join(__dirname, "client", "build", "index.html"));
