@@ -60,7 +60,8 @@ export default class Game extends React.Component {
             leaveButton: "Leave Game",
             disableLeaveGameButton: false,
             continueGame: false,
-            hideResignButton: ""
+            hideResignButton: "",
+            hideDrawButton: ""
         }
     }
 
@@ -88,7 +89,8 @@ export default class Game extends React.Component {
                 disabled: true,
                 status: data.result,
                 hideButton: "",
-                hideResignButton: "none"
+                hideResignButton: "none",
+                hideDrawButton: "none"
             });
         });
         socket.on("continueGame", () => {
@@ -97,6 +99,18 @@ export default class Game extends React.Component {
         socket.on("disconnectButton", () => {
             alert("Opponent left");
             this.state.socket.emit("leaveGame", { gameId: this.state.gameId, userId: this.state.userId, check: true });
+        });
+        socket.on("drawButton", () => {
+            if (window.confirm("Draw?")) {
+                this.setState({
+                    disabled: true,
+                    status: "Draw",
+                    hideButton: "",
+                    hideResignButton: "none",
+                    hideDrawButton: "none"
+                });
+                this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Draw" });
+            }
         });
         socket.on("toLobby", () => {
             //reset game
@@ -136,7 +150,8 @@ export default class Game extends React.Component {
                 leaveButton: "Leave Game",
                 disableLeaveGameButton: false,
                 continueGame: false,
-                hideResignButton: ""
+                hideResignButton: "",
+                hideDrawButton: ""
             });
         });
         socket.on("nextGameData", data => {
@@ -176,7 +191,8 @@ export default class Game extends React.Component {
                     leaveButton: "Leave Game",
                     disableLeaveGameButton: false,
                     continueGame: false,
-                    hideResignButton: ""
+                    hideResignButton: "",
+                    hideDrawButton: ""
                 });
             } else {
                 this.setState({
@@ -214,7 +230,8 @@ export default class Game extends React.Component {
                     leaveButton: "Leave Game",
                     disableLeaveGameButton: false,
                     continueGame: false,
-                    hideResignButton: ""
+                    hideResignButton: "",
+                    hideDrawButton: ""
                 });
             }
         });
@@ -240,7 +257,8 @@ export default class Game extends React.Component {
                 disabled: true,
                 status: "White Won",
                 hideButton: "",
-                hideResignButton: "none"
+                hideResignButton: "none",
+                hideDrawButton: "none"
             });
             this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "White Won" });
         } else {
@@ -248,10 +266,18 @@ export default class Game extends React.Component {
                 disabled: true,
                 status: "Black Won",
                 hideButton: "",
-                hideResignButton: "none"
+                hideResignButton: "none",
+                hideDrawButton: "none"
             });
             this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Black Won" });
         }
+    }
+
+    drawButton = () => {
+        this.setState({
+            hideDrawButton: "none"
+        });
+        this.state.socket.emit("askDraw", {userId: this.state.userId, gameId: this.state.gameId});
     }
 
     handleClick2(i, check) {
@@ -637,7 +663,8 @@ export default class Game extends React.Component {
                             disabled: true,
                             status: "Stalemate Draw",
                             hideButton: "",
-                            hideResignButton: "none"
+                            hideResignButton: "none",
+                            hideDrawButton: "none"
                         });
                         this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Stalemate Draw" });
                     } else {
@@ -646,7 +673,8 @@ export default class Game extends React.Component {
                             disabled: true,
                             status: status,
                             hideButton: "",
-                            hideResignButton: "none"
+                            hideResignButton: "none",
+                            hideDrawButton: "none"
                         });
                         this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: status });
                     }
@@ -680,7 +708,8 @@ export default class Game extends React.Component {
                             disabled: true,
                             status: "Draw",
                             hideButton: "",
-                            hideResignButton: "none"
+                            hideResignButton: "none",
+                            hideDrawButton: "none"
                         });
                         this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Draw" });
                     }
@@ -699,7 +728,8 @@ export default class Game extends React.Component {
                                 disabled: true,
                                 status: "Draw",
                                 hideButton: "",
-                                hideResignButton: "none"
+                                hideResignButton: "none",
+                                hideDrawButton: "none"
                             });
                             this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Draw" });
                         }
@@ -710,7 +740,8 @@ export default class Game extends React.Component {
                             disabled: true,
                             status: "Draw",
                             hideButton: "",
-                            hideResignButton: "none"
+                            hideResignButton: "none",
+                            hideDrawButton: "none"
                         });
                         this.state.socket.emit("gameResult", { gameId: this.state.gameId, userId: this.state.userId, result: "Draw" });
                     }
@@ -948,7 +979,7 @@ export default class Game extends React.Component {
                                     <button onClick={this.newGame} disabled={this.state.disableNewGameButton} style={{ display: this.state.hideButton }}>{this.state.newGameButton}</button>
                                     <button onClick={this.disconnect} disabled={this.state.disableLeaveGameButton} style={{ display: this.state.hideButton }}>{this.state.leaveButton}</button>
                                     <button onClick={this.resignButton} style={{ display: this.state.hideResignButton }}>Resign</button>
-                                    <button>Draw</button>
+                                    <button onClick={this.drawButton} style={{ display: this.state.hideDrawButton }}>Draw</button>
                                 </div>
                             </div>
                             <div className="icons-attribution">

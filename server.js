@@ -245,6 +245,11 @@ io.on("connection", client => {
             delete games[data.gameId];
         }
     });
+    
+    client.on("askDraw", data => {
+        const opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+        io.to(opponentId).emit("drawButton");
+    });
 });
 
 // Generate Game ID
