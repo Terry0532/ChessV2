@@ -1,17 +1,28 @@
 body {
   font: 14px "Century Gothic", Futura, sans-serif;
   margin: 20px;
-  background-color: #ECECEA;
+  background-color: #ececea;
 }
 
-ol, ul {
+ol,
+ul {
   padding-left: 30px;
 }
 
-.board-row:after {
-  clear: both;
-  content: "";
-  display: table;
+.board-row {
+  /* clear: both; */
+  /* content: ""; */
+  /* display: table; */
+  /* overflow: hidden; */
+  white-space: nowrap;
+}
+
+.game-board {
+  font-size: 0;
+}
+
+.button {
+  display: inline-block;
 }
 
 .status {
@@ -51,7 +62,9 @@ ol, ul {
   margin-left: 20px;
 }
 
-.icons-attribution, .game-status, .fallen-soldier-block {
+.icons-attribution,
+.game-status,
+.fallen-soldier-block {
   margin-top: 20px;
   min-height: 50px;
 }
