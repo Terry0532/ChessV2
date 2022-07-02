@@ -70,9 +70,9 @@ export default class Game extends React.Component {
     const { endpoint } = this.state;
 
     //local
-    const socket = socketIOClient(endpoint);
+    // const socket = socketIOClient(endpoint);
     //deploy
-    // const socket = socketIOClient();
+    const socket = socketIOClient();
 
     socket.on("connected", (data) => {
       this.setState({ socket: socket, userId: data.id });
