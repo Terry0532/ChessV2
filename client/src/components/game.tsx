@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-expressions */
 import React, { useEffect, useReducer } from "react";
 import "../index.css";
-import Board from "./board.js";
+import Board from "./board";
 import FallenSoldierBlock from "./fallensoldiers.js";
 import Queen from "../pieces/queen.js";
 import Knight from "../pieces/knight.js";
@@ -954,6 +954,6 @@ const Game = () => {
       )}
     </div>
   );
-}
+};
 
 export default Game;

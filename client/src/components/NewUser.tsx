@@ -45,6 +45,6 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation }) =
       </Form.Group>
     </Form>
   );
-}
+};
 
 export default NewUser;

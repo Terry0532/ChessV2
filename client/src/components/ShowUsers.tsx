@@ -102,6 +102,6 @@ const ShowUsers: React.FC<ShowUsersProps> = ({ socket, gameStartConfirmation, ga
       </ListGroup>
     </Fragment>
   );
-}
+};
 
 export default ShowUsers;
