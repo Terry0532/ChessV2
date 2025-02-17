@@ -15,66 +15,46 @@ import { socket } from '../socket.js';
 const Game = () => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
 
+  const emitGameEvent = (event: string, additionalData = {}) => {
+    const payload = {
+      userId: gameState.userId,
+      gameId: gameState.gameId,
+      ...additionalData
+    };
+    socket.emit(event, payload);
+  }
+  
   const newGame = () => {
     if (gameState.continueGame) {
-      socket.emit("newGame", {
-        userId: gameState.userId,
-        gameId: gameState.gameId,
-        check: true,
-      });
+      emitGameEvent("newGame", { check: true });
     }
-    if (!gameState.continueGame) {
-      socket.emit("newGame", {
-        userId: gameState.userId,
-        gameId: gameState.gameId,
-        check: false,
-      });
-
+    else {
+      emitGameEvent("newGame", { check: false });
       dispatchGameAction(["newGame"]);
     }
   };
 
   const disconnect = () => {
-    socket.emit("leaveGame", {
-      gameId: gameState.gameId,
-      userId: gameState.userId,
-      check: false,
-    });
+    emitGameEvent("leaveGame", { check: false });
   };
 
   const resignButton = () => {
-    if (gameState.disabled && gameState.turn === "white") {
-      dispatchGameAction(["gameover", "White Won"]);
-
-      socket.emit("gameResult", {
-        gameId: gameState.gameId,
-        userId: gameState.userId,
-        result: "White Won",
-      });
-    } 
-    else {
-      dispatchGameAction(["gameover", "Black Won"]);
-
-      socket.emit("gameResult", {
-        gameId: gameState.gameId,
-        userId: gameState.userId,
-        result: "Black Won",
-      });
+    if (gameState.disabled) {
+      const result = gameState.turn === "white" ? "White Won" : "Black Won";
+      dispatchGameAction(["gameover", result]);
+      emitGameEvent("gameResult", { result });
     }
   };
 
   const drawButton = () => {
     dispatchGameAction(["gameResult", "Draw"]);
-    gameState.socket.emit("askDraw", {
-      userId: gameState.userId,
-      gameId: gameState.gameId,
-    });
+    emitGameEvent("askDraw");
   };
 
-  const handleClick2 = (i: number, check: boolean) => {
+  const handleBoardClick = (i: number, check: boolean) => {
     let squares = gameState.squares;
-    let white = gameState.white;
-    let black = gameState.black;
+    let whiteRemainingPieces = gameState.whiteRemainingPieces;
+    let blackRemainingPieces = gameState.blackRemainingPieces;
     if (gameState.sourceSelection === -1) {
       let highLightMoves: number[] = [];
       if (!squares[i] || squares[i].player !== gameState.player) {
@@ -82,13 +62,7 @@ const Game = () => {
         if (squares[i]) {
           squares[i].style = { ...squares[i].style, backgroundColor: "" };
         }
-        socket.emit("moves", {
-          gameId: gameState.gameId,
-          i: i,
-          changeTurn: false,
-          userId: gameState.userId,
-          check: check,
-        });
+        emitGameEvent("moves", { i, changeTurn: false, check });
       } 
       else {
         //highlight selected piece
@@ -96,6 +70,7 @@ const Game = () => {
           ...squares[i].style,
           backgroundColor: "RGB(111,143,114)",
         };
+
         //check if castle is possible and add possible moves to highLightMoves array
         if (i === 4 || i === 60) {
           if (gameState.turn === "white" && gameState.whiteKingFirstMove) {
@@ -148,6 +123,7 @@ const Game = () => {
             }
           }
         }
+
         //highlight possible moves
         if (squares[i].name === "Pawn") {
           const canEnpassant = enpassant(i);
@@ -177,6 +153,7 @@ const Game = () => {
             gameState.turn
           );
         }
+        
         for (let index = 0; index < highLightMoves.length; index++) {
           const element = highLightMoves[index];
           if (squares[element] !== null) {
@@ -192,13 +169,7 @@ const Game = () => {
         }
 
         dispatchGameAction(["selectPiece", { squares, i, highLightMoves }]);
-        socket.emit("moves", {
-          gameId: gameState.gameId,
-          i: i,
-          changeTurn: false,
-          userId: gameState.userId,
-          check: check,
-        });
+        emitGameEvent("moves", { i, changeTurn: false, check });
       }
     } 
     else if (gameState.sourceSelection === -2) {
@@ -221,23 +192,11 @@ const Game = () => {
         const newSquares = gameState.tempSquares;
         newSquares[gameState.convertPawnPosition] = squares[i];
         dispatchGameAction(["convertPawn", newSquares]);
-        socket.emit("moves", {
-          gameId: gameState.gameId,
-          i: i,
-          changeTurn: true,
-          userId: gameState.userId,
-          check: check,
-        });
+        emitGameEvent("moves", { i, changeTurn: true, check });
       } 
       else {
         dispatchGameAction(["wrongMove", squares]);
-        socket.emit("moves", {
-          gameId: gameState.gameId,
-          i: i,
-          changeTurn: false,
-          userId: gameState.userId,
-          check: check,
-        });
+        emitGameEvent("moves", { i, changeTurn: false, check });
       }
     } 
     else if (gameState.sourceSelection > -1) {
@@ -266,12 +225,12 @@ const Game = () => {
               whiteFallenSoldiers.push(
                 squares[gameState.lastTurnPawnPosition]
               );
-              white = white - 1;
+              whiteRemainingPieces -= 1;
             } else {
               blackFallenSoldiers.push(
                 squares[gameState.lastTurnPawnPosition]
               );
-              black = black - 1;
+              blackRemainingPieces -= 1;
             }
 
             //move player selected piece to target position
@@ -286,13 +245,7 @@ const Game = () => {
               "enpassant",
               { squares, whiteFallenSoldiers, blackFallenSoldiers, allPossibleMovesWhite, allPossibleMovesBlack }
             ]);
-            socket.emit("moves", {
-              gameId: gameState.gameId,
-              i: i,
-              changeTurn: true,
-              userId: gameState.userId,
-              check: check,
-            });
+            emitGameEvent("moves", { i, changeTurn: true, check });
           } 
           else {
             //check if current pawn is moving for the first time and moving 2 squares forward
@@ -316,9 +269,9 @@ const Game = () => {
             //update number of pieces
             if (squares[i] !== null) {
               if (gameState.turn === "white") {
-                black = black - 1;
+                blackRemainingPieces -= 1;
               } else {
-                white = white - 1;
+                whiteRemainingPieces -= 1;
               }
             }
             addToFallenSoldierList(i, squares, whiteFallenSoldiers, blackFallenSoldiers);
@@ -378,35 +331,20 @@ const Game = () => {
               
               //update chess board with convert choices and save chess board without choices in this.state.tempSquares
               dispatchGameAction(["updateBoard", { squares, tempSquares, i }]);
-              socket.emit("moves", {
-                gameId: gameState.gameId,
-                i: i,
-                changeTurn: false,
-                userId: gameState.userId,
-                check: check,
-              });
+              emitGameEvent("moves", { i, changeTurn: false, check });
             } 
             else {
-              dispatchGameAction(["moves", { squares, firstMove, lastTurnPawnPosition, allPossibleMovesWhite, allPossibleMovesBlack }]);
-              socket.emit("moves", {
-                gameId: gameState.gameId,
-                i: i,
-                changeTurn: true,
-                userId: gameState.userId,
-                check: check,
-              });
+              dispatchGameAction([
+                "moves", 
+                { squares, firstMove, lastTurnPawnPosition, allPossibleMovesWhite, allPossibleMovesBlack }
+              ]);
+              emitGameEvent("moves", { i, changeTurn: true, check });
             }
           }
         } 
         else {
           dispatchGameAction(["wrongMove", squares]);
-          socket.emit("moves", {
-            gameId: gameState.gameId,
-            i: i,
-            changeTurn: false,
-            userId: gameState.userId,
-            check: check,
-          });
+          emitGameEvent("moves", { i, changeTurn: false, check });
         }
       } 
       else if (squares[gameState.sourceSelection].name === "King") {
@@ -436,22 +374,16 @@ const Game = () => {
 
           //to record king has been moved or not. for castle
           dispatchGameAction(["moveKing", { i, squares }]);
-          socket.emit("moves", {
-            gameId: gameState.gameId,
-            i: i,
-            changeTurn: true,
-            userId: gameState.userId,
-            check: check,
-          });
+          emitGameEvent("moves", { i, changeTurn: true, check });
         } 
         else if (gameState.highLightMoves.includes(i)) {
           //update number of pieces
           if (squares[i] !== null) {
             if (gameState.turn === "white") {
-              black = black - 1;
+              blackRemainingPieces -= 1;
             } 
             else {
-              white = white - 1;
+              whiteRemainingPieces -= 1;
             }
           }
           addToFallenSoldierList(i, squares, whiteFallenSoldiers, blackFallenSoldiers);
@@ -459,22 +391,10 @@ const Game = () => {
 
           //to record king has been moved or not. for castle
           dispatchGameAction(["moveKing", { i, squares }]);
-          socket.emit("moves", {
-            gameId: gameState.gameId,
-            i: i,
-            changeTurn: true,
-            userId: gameState.userId,
-            check: check,
-          });
+          emitGameEvent("moves", { i, changeTurn: true, check });
         } else {
           dispatchGameAction(["wrongMove", squares]);
-          socket.emit("moves", {
-            gameId: gameState.gameId,
-            i: i,
-            changeTurn: false,
-            userId: gameState.userId,
-            check: check,
-          });
+          emitGameEvent("moves", { i, changeTurn: false, check });
         }
       } 
       else {
@@ -483,9 +403,9 @@ const Game = () => {
           //update number of pieces
           if (squares[i] !== null) {
             if (gameState.turn === "white") {
-              black = black - 1;
+              blackRemainingPieces -= 1;
             } else {
-              white = white - 1;
+              whiteRemainingPieces -= 1;
             }
           }
           addToFallenSoldierList(i, squares, whiteFallenSoldiers, blackFallenSoldiers);
@@ -495,22 +415,10 @@ const Game = () => {
           const allPossibleMovesWhite = getAllPossibleMoves(squares, Player.White);
           const allPossibleMovesBlack = getAllPossibleMoves(squares, Player.Black);
           dispatchGameAction(["moveRook", { i, squares, allPossibleMovesWhite, allPossibleMovesBlack }]);
-          socket.emit("moves", {
-            gameId: gameState.gameId,
-            i: i,
-            changeTurn: true,
-            userId: gameState.userId,
-            check: check,
-          });
+          emitGameEvent("moves", { i, changeTurn: true, check });
         } else {
           dispatchGameAction(["wrongMove", squares]);
-          socket.emit("moves", {
-            gameId: gameState.gameId,
-            i: i,
-            changeTurn: false,
-            userId: gameState.userId,
-            check: check,
-          });
+          emitGameEvent("moves", { i, changeTurn: false, check });
         }
       }
 
@@ -562,25 +470,19 @@ const Game = () => {
         //if next play doesn't have any possible moves then winner or stalemate
         if (temp.length === 0) {
           if (!squares[i].possibleMoves(i, squares).includes(kingPosition)) {
-            dispatchGameAction(["gameResult", "Stalemate Draw"]);
-            socket.emit("gameResult", {
-              gameId: gameState.gameId,
-              userId: gameState.userId,
-              result: "Stalemate Draw",
-            });
+            const result = "Stalemate Draw";
+            dispatchGameAction(["gameResult", result]);
+            emitGameEvent("gameResult", { result });
           } else {
-            const status = turn === "white" ? "Black Won" : "White Won";
-            dispatchGameAction(["gameResult", status]);
-            socket.emit("gameResult", {
-              gameId: gameState.gameId,
-              userId: gameState.userId,
-              result: status,
-            });
+            const result = turn === "white" ? "Black Won" : "White Won";
+            dispatchGameAction(["gameResult", result]);
+            emitGameEvent("gameResult", { result });
           }
         }
 
         //other ways to draw
-        if (black < 3 && white < 3) {
+        if (blackRemainingPieces < 3 && whiteRemainingPieces < 3) {
+          const result = "Draw";
           let temp: boolean | undefined = undefined;
           let temp2: boolean | undefined = false;
           for (let i = 0; i < squares.length; i++) {
@@ -609,16 +511,15 @@ const Game = () => {
 
           //king and bishop versus king and bishop with the bishops on the same color
           if (temp === temp2) {
-            dispatchGameAction(["gameResult", "Draw"]);
-            socket.emit("gameResult", {
-              gameId: gameState.gameId,
-              userId: gameState.userId,
-              result: "Draw",
-            });
+            dispatchGameAction(["gameResult", result]);
+            emitGameEvent("gameResult", { result });
           }
 
           //king and bishop versus king, king and knight versus king draw
-          if ((black === 2 && white === 1) || (black === 1 && white === 2)) {
+          if (
+            (blackRemainingPieces === 2 && whiteRemainingPieces === 1) 
+            || (blackRemainingPieces === 1 && whiteRemainingPieces === 2)
+          ) {
             let temp: boolean = false;
             for (let i = 0; i < squares.length; i++) {
               if (squares[i] !== null) {
@@ -631,34 +532,22 @@ const Game = () => {
               }
             }
             if (temp) {
-              dispatchGameAction(["gameResult", "Draw"]);
-              socket.emit("gameResult", {
-                gameId: gameState.gameId,
-                userId: gameState.userId,
-                result: "Draw",
-              });
+              dispatchGameAction(["gameResult", result]);
+              emitGameEvent("gameResult", { result });
             }
           }
 
           //king versus king draw
-          if (black === 1 && white === 1) {
-            dispatchGameAction(["gameResult", "Draw"]);
-            socket.emit("gameResult", {
-              gameId: gameState.gameId,
-              userId: gameState.userId,
-              result: "Draw",
-            });
+          if (blackRemainingPieces === 1 && whiteRemainingPieces === 1) {
+            dispatchGameAction(["gameResult", result]);
+            emitGameEvent("gameResult", { result });
           }
         }
       }
 
-      dispatchGameAction(["updatePieces", { white, black }]);
+      dispatchGameAction(["updatePieces", { whiteRemainingPieces, blackRemainingPieces }]);
     }
   }
-
-  const handleClick = (i: number) => {
-    handleClick2(i, true);
-  };
 
   const enpassant = (selectedPawnPosition: number) => {
     let enpassant = false;
@@ -695,7 +584,9 @@ const Game = () => {
     return squares;
   }
 
-  const addToFallenSoldierList = (i: number, squares: any[], whiteFallenSoldiers: string[], blackFallenSoldiers: string[]) => {
+  const addToFallenSoldierList = (
+    i: number, squares: any[], whiteFallenSoldiers: string[], blackFallenSoldiers: string[]
+  ) => {
     if (squares[i] !== null) {
       if (squares[i].player === 1) {
         whiteFallenSoldiers.push(squares[i]);
@@ -706,7 +597,6 @@ const Game = () => {
     dispatchGameAction(["addToFallenSoldierList", { whiteFallenSoldiers, blackFallenSoldiers }]);
   }
 
-  //move player selected piece to target position
   const movePiece = (i: number, squares: any[], sourceSelection: number) => {
     squares[i] = squares[sourceSelection];
     squares[sourceSelection] = null;
@@ -719,7 +609,6 @@ const Game = () => {
     for (let i = 0; i < squares.length; i++) {
       const piece = squares[i];
       if (piece !== null && piece.player === player) {
-        // For pawns, use possibleCaptureMoves; otherwise, use possibleMoves.
         const tempArray = piece.name === "Pawn"
           ? piece.possibleCaptureMoves(i, squares)
           : piece.possibleMoves(i, squares);
@@ -730,7 +619,6 @@ const Game = () => {
       }
     }
     
-    // Sort the moves and remove duplicates.
     allPossibleMoves.sort();
     const uniqueMoves: number[] = [];
     for (let i = 0; i < allPossibleMoves.length; i++) {
@@ -744,10 +632,6 @@ const Game = () => {
 
   //to check if selected piece can move or not, e.g., if they move seleced piece and it will end up in checkmate
   const checkMovesVer2 = (squares: any[], highLightMoves: number[], i: number, turn: string) => {
-    console.log(squares)
-    console.log(highLightMoves)
-    console.log(i)
-    console.log(turn)
     const selectedPiece = i;
     let king = false;
     if (squares[selectedPiece].name === "King") {
@@ -802,29 +686,19 @@ const Game = () => {
     }
     function disconnectButton() {
       alert("Opponent left");
-
-      socket.emit("leaveGame", {
-        gameId: gameState.gameId,
-        userId: gameState.userId,
-        check: true,
-      });
+      emitGameEvent("leaveGame", { check: true });
     }
     function drawButton() {
       if (window.confirm("Draw?")) {
         dispatchGameAction(["gameover", "Draw"]);
-
-        socket.emit("gameResult", {
-          gameId: gameState.gameId,
-          userId: gameState.userId,
-          result: "Draw",
-        });
+        emitGameEvent("gameResult", { result: "Draw" });
       }
     }
     function updateGameData(data: any) {
       if (data.turn === gameState.userId) {
         dispatchGameAction(["updateGameData", false]);
       }
-      handleClick2(data.i, false);
+      handleBoardClick(data.i, false);
     }
     function gameover(data: any) {
       dispatchGameAction(["gameover", data.result]);
@@ -860,7 +734,7 @@ const Game = () => {
             <div className="game-board">
               <Board
                 squares={gameState.squares}
-                onClick={(i: number) => handleClick(i)}
+                onClick={(i: number) => handleBoardClick(i, true)}
                 disabled={gameState.disabled}
                 rotateBoard={gameState.rotateBoard}
               />

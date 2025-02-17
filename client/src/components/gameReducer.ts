@@ -10,8 +10,8 @@ export interface GameState {
   sourceSelection: number,
   status: string,
   turn: string,
-  white: number,
-  black: number,
+  whiteRemainingPieces: number,
+  blackRemainingPieces: number,
   lastTurnPawnPosition: any,
   firstMove: any,
   highLightMoves: number[],
@@ -98,7 +98,7 @@ export type GameAction =
       }
     ]
   | ['gameResult', string]
-  | ['updatePieces', { white: number; black: number }]
+  | ['updatePieces', { whiteRemainingPieces: number; blackRemainingPieces: number }]
   | ['registrationConfirmation', boolean]
   | ['hideDrawButton']
   | [
@@ -115,8 +115,8 @@ export const initialGameState: GameState = {
   sourceSelection: -1,
   status: "",
   turn: "white",
-  white: 16,
-  black: 16,
+  whiteRemainingPieces: 16,
+  blackRemainingPieces: 16,
   lastTurnPawnPosition: undefined,
   //firstMove true means last turn enemy's pawn moved for the first time and it moved 2 squares forward. for en pasaant
   firstMove: undefined,
@@ -366,8 +366,8 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
     case "updatePieces":
       return {
         ...gameState,
-        white: newValue.white,
-        black: newValue.black
+        whiteRemainingPieces: newValue.whiteRemainingPieces,
+        blackRemainingPieces: newValue.blackRemainingPieces
       };
 
     case "registrationConfirmation":
