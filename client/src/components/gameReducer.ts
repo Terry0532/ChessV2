@@ -4,8 +4,8 @@ export enum Player { White = 1, Black = 2 };
 
 export interface GameState {
   squares: any[],
-  whiteFallenSoldiers: string[],
-  blackFallenSoldiers: string[],
+  whiteFallenSoldiers: any[],
+  blackFallenSoldiers: any[],
   player: Player,
   sourceSelection: number,
   status: string,

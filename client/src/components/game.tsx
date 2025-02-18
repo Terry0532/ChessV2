@@ -2,7 +2,7 @@
 import React, { useEffect, useReducer } from "react";
 import "../index.css";
 import Board from "./board";
-import FallenSoldierBlock from "./fallensoldiers.js";
+import FallenSoldierBlock from "./fallensoldiers";
 import Queen from "../pieces/queen.js";
 import Knight from "../pieces/knight.js";
 import Bishop from "../pieces/bishop.js";
@@ -153,7 +153,7 @@ const Game = () => {
             gameState.turn
           );
         }
-        
+
         for (let index = 0; index < highLightMoves.length; index++) {
           const element = highLightMoves[index];
           if (squares[element] !== null) {
