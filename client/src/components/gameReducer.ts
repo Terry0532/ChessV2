@@ -44,18 +44,18 @@ export interface GameState {
 };
 
 export type GameAction =
-  | ['connected', string]
-  | ['updateGameData', boolean]
-  | ['opponentLeft']
-  | ['gameover', string]
-  | ['continueGame']
-  | ['newGame']
-  | ['updateStatus', string]
-  | ['selectPiece', any]
-  | ['convertPawn', any[]]
-  | ['wrongMove', any[]]
+  | ["connected", string]
+  | ["updateGameData", boolean]
+  | ["opponentLeft"]
+  | ["gameover", string]
+  | ["continueGame"]
+  | ["newGame"]
+  | ["updateStatus", string]
+  | ["selectPiece", any]
+  | ["convertPawn", any[]]
+  | ["wrongMove", any[]]
   | [
-      'enpassant',
+      "enpassant",
       {
         squares: any[];
         whiteFallenSoldiers: any;
@@ -63,7 +63,7 @@ export type GameAction =
       }
     ]
   | [
-      'moves',
+      "moves",
       {
         squares: any[];
         firstMove: boolean | undefined;
@@ -71,20 +71,38 @@ export type GameAction =
       }
     ]
   | [
-      'addToFallenSoldierList',
-      { whiteFallenSoldiers: any; blackFallenSoldiers: any }
+      "addToFallenSoldierList",
+      { whiteFallenSoldiers: any; blackFallenSoldiers: any; }
     ]
   | [
-      'updateBoard',
-      { squares: any[]; tempSquares: any[]; i: number }
+      "updateBoard",
+      { squares: any[]; tempSquares: any[]; i: number; }
     ]
-  | ['moveKing', { squares: any[]; i: number }]
-  | ['moveRook', { squares: any[]; i: number; }]
-  | ['gameResult', string]
-  | ['updatePieces', { whiteRemainingPieces: number; blackRemainingPieces: number }]
-  | ['registrationConfirmation', boolean]
-  | ['hideDrawButton']
-  | ['gameStartConfirmation', { game_data: any; status: boolean; game_id: string }];
+  | ["moveKing", { squares: any[]; i: number; }]
+  | ["moveRook", { squares: any[]; i: number; }]
+  | ["gameResult", string]
+  | ["updatePieces", { whiteRemainingPieces: number; blackRemainingPieces: number; }]
+  | ["registrationConfirmation", boolean]
+  | ["hideDrawButton"]
+  | ["gameStartConfirmation", { game_data: any; status: boolean; game_id: string; }]
+  | [
+      "movePiece", 
+      { 
+        squares: any[]; 
+        canEnpassant?: boolean;
+        castle?: boolean;
+        disabled: boolean;
+        firstMove?: boolean;
+        piece: string;
+        targetPosition: number;
+        selectedPiece: number;
+        lastTurnPawnPosition?: number;
+        whiteFallenSoldiers: any;
+        blackFallenSoldiers: any;
+        whiteRemainingPieces: number; 
+        blackRemainingPieces: number;
+      }
+    ];
 
 
 export const initialGameState: GameState = {
@@ -362,6 +380,115 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         gameData: newValue.game_data,
       };
 
+    case "movePiece":
+      let squares = newValue.squares;
+      whiteKingPosition = gameState.whiteKingPosition;
+      blackKingPosition = gameState.blackKingPosition;
+      whiteKingFirstMove = gameState.whiteKingFirstMove;
+      blackKingFirstMove = gameState.blackKingFirstMove;
+      whiteRookFirstMoveLeft = gameState.whiteRookFirstMoveLeft;
+      whiteRookFirstMoveRight = gameState.whiteRookFirstMoveRight;
+      blackRookFirstMoveLeft = gameState.blackRookFirstMoveLeft;
+      blackRookFirstMoveRight = gameState.blackRookFirstMoveRight;
+
+      if (newValue.piece === "pawn" && newValue.canEnpassant) {
+        squares[newValue.targetPosition] = squares[newValue.selectedPiece];
+        squares[gameState.lastTurnPawnPosition] = null;
+        squares[newValue.selectedPiece] = null;
+      }
+      else if (newValue.piece === "king" && newValue.castle) {
+        if (newValue.targetPosition === 58) {
+          squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
+          squares = movePiece(59, squares, 56);
+        }
+        else if (newValue.targetPosition === 62) {
+          squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
+          squares = movePiece(61, squares, 63);
+        }
+        else if (newValue.targetPosition === 2) {
+          squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
+          squares = movePiece(3, squares, 0);
+        }
+        else if (newValue.targetPosition === 6) {
+          squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
+          squares = movePiece(5, squares, 7);
+        }
+      }
+      else {
+        squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
+      }
+
+      if (newValue.piece === "king") {
+        if (gameState.turn === "white") {
+          whiteKingPosition = newValue.targetPosition;
+        }
+        else {
+          blackKingPosition = newValue.targetPosition;
+        }
+
+        if (
+          newValue.selectedPiece === 60 &&
+          newValue.squares[newValue.targetPosition].player === Player.White
+        ) {
+          whiteKingFirstMove = false;
+        }
+        else if (
+          newValue.selectedPiece === 4 &&
+          newValue.squares[newValue.targetPosition].player === Player.Black
+        ) {
+          blackKingFirstMove = false;
+        }
+      }
+      else if (newValue.piece === "rook") {
+        if (
+          newValue.selectedPiece === 56 &&
+          newValue.squares[newValue.targetPosition].player === Player.White
+        ) {
+          whiteRookFirstMoveLeft = false;
+        }
+        if (
+          newValue.selectedPiece === 63 &&
+          newValue.squares[newValue.targetPosition].player === Player.White
+        ) {
+          whiteRookFirstMoveRight = false;
+        }
+        if (
+          newValue.selectedPiece === 0 &&
+          newValue.squares[newValue.targetPosition].player === Player.Black
+        ) {
+          blackRookFirstMoveLeft = false;
+        }
+        if (
+          newValue.selectedPiece === 7 &&
+          newValue.squares[newValue.targetPosition].player === Player.Black
+        ) {
+          blackRookFirstMoveRight = false;
+        }
+      }
+
+      return {
+        ...changeTurn(gameState),
+        status: "",
+        highLightMoves: [],
+        sourceSelection: -1,
+        squares: newValue.squares,
+        whiteFallenSoldiers: newValue.whiteFallenSoldiers,
+        blackFallenSoldiers: newValue.blackFallenSoldiers,
+        disabled: newValue.disabled,
+        firstMove: newValue.firstMove,
+        lastTurnPawnPosition: newValue.lastTurnPawnPosition,
+        whiteRemainingPieces: newValue.whiteRemainingPieces,
+        blackRemainingPieces: newValue.blackRemainingPieces,
+        whiteKingPosition,
+        blackKingPosition,
+        whiteKingFirstMove,
+        blackKingFirstMove,
+        whiteRookFirstMoveLeft,
+        whiteRookFirstMoveRight,
+        blackRookFirstMoveLeft,
+        blackRookFirstMoveRight,
+      };
+
     default:
       return gameState;
   }
@@ -374,3 +501,9 @@ const changeTurn = (gameState: GameState) => {
     turn: gameState.turn === "white" ? "black" : "white"
   };
 };
+
+const movePiece = (i: number, squares: any[], sourceSelection: number) => {
+  squares[i] = squares[sourceSelection];
+  squares[sourceSelection] = null;
+  return squares;
+}

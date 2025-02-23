@@ -663,6 +663,224 @@ const Game = () => {
     return newList;
   };
 
+  const receiveOpponentMove = (selectedPiece: number, targetPosition: number, availableMoves: number[]) => {
+    let squares = gameState.squares;
+    let whiteRemainingPieces = gameState.whiteRemainingPieces;
+    let blackRemainingPieces = gameState.blackRemainingPieces;
+    const whiteFallenSoldiers = gameState.whiteFallenSoldiers;
+    const blackFallenSoldiers = gameState.blackFallenSoldiers;
+
+    if (squares[selectedPiece].name === "Pawn") {
+      const canEnpassant = enpassant(selectedPiece);
+
+      if (
+        canEnpassant 
+        && squares[targetPosition] === null 
+        && (
+          gameState.lastTurnPawnPosition - 8 === targetPosition 
+          || gameState.lastTurnPawnPosition + 8 === targetPosition
+        )
+      ) {
+        if (squares[gameState.lastTurnPawnPosition].player === Player.White) {
+          whiteFallenSoldiers.push(squares[gameState.lastTurnPawnPosition]);
+          whiteRemainingPieces -= 1;
+        } else {
+          blackFallenSoldiers.push(squares[gameState.lastTurnPawnPosition]);
+          blackRemainingPieces -= 1;
+        }
+
+        dispatchGameAction([
+          "movePiece",
+          { 
+            squares, 
+            whiteFallenSoldiers, 
+            blackFallenSoldiers, 
+            whiteRemainingPieces, 
+            blackRemainingPieces,
+            disabled: false,
+            piece: "pawn",
+            selectedPiece,
+            canEnpassant,
+            targetPosition
+          }
+        ]);
+      } 
+      else {
+        let firstMove: boolean;
+        if (
+          squares[selectedPiece].player === 1 
+          && targetPosition === selectedPiece - 16
+        ) {
+          firstMove = true;
+        } 
+        else if (
+          squares[selectedPiece].player === 2 
+          && targetPosition === selectedPiece + 16
+        ) {
+          firstMove = true;
+        }
+
+        const lastTurnPawnPosition = targetPosition;
+
+        if (squares[targetPosition] !== null) {
+          if (gameState.turn === "white") {
+            blackFallenSoldiers.push(squares[targetPosition]);
+            blackRemainingPieces -= 1;
+          } else {
+            whiteFallenSoldiers.push(squares[targetPosition]);
+            whiteRemainingPieces -= 1;
+          }
+        }
+
+        //to convert pawn that reach other side of the chess board
+        if ([0, 1, 2, 3, 4, 5, 6, 7, 56, 57, 58, 59, 60, 61, 62, 63].includes(targetPosition)) {
+          const tempSquares = squares.concat();
+          //give player choice to convert their pawn and highlight those choices
+          if (gameState.turn === "white") {
+            tempSquares[10] = new Knight(1);
+            tempSquares[10].style = {
+              ...tempSquares[10].style,
+              backgroundColor: "RGB(111,143,114)",
+            };
+            tempSquares[11] = new Bishop(1);
+            tempSquares[11].style = {
+              ...tempSquares[11].style,
+              backgroundColor: "RGB(111,143,114)",
+            };
+            tempSquares[12] = new Rook(1);
+            tempSquares[12].style = {
+              ...tempSquares[12].style,
+              backgroundColor: "RGB(111,143,114)",
+            };
+            tempSquares[13] = new Queen(1);
+            tempSquares[13].style = {
+              ...tempSquares[13].style,
+              backgroundColor: "RGB(111,143,114)",
+            };
+          } 
+          else if (gameState.turn === "black") {
+            tempSquares[50] = new Knight(2);
+            tempSquares[50].style = {
+              ...tempSquares[50].style,
+              backgroundColor: "RGB(111,143,114)",
+            };
+            tempSquares[51] = new Bishop(2);
+            tempSquares[51].style = {
+              ...tempSquares[51].style,
+              backgroundColor: "RGB(111,143,114)",
+            };
+            tempSquares[52] = new Rook(2);
+            tempSquares[52].style = {
+              ...tempSquares[52].style,
+              backgroundColor: "RGB(111,143,114)",
+            };
+            tempSquares[53] = new Queen(2);
+            tempSquares[53].style = {
+              ...tempSquares[53].style,
+              backgroundColor: "RGB(111,143,114)",
+            };
+          }
+          
+          dispatchGameAction(["updateBoard", { squares, tempSquares, i: targetPosition }]);
+        } 
+        else {
+          dispatchGameAction([
+            "movePiece",
+            { 
+              squares, 
+              whiteFallenSoldiers, 
+              blackFallenSoldiers, 
+              whiteRemainingPieces, 
+              blackRemainingPieces,
+              disabled: false,
+              firstMove,
+              lastTurnPawnPosition,
+              piece: "pawn",
+              selectedPiece,
+              targetPosition
+            }
+          ]);
+        }
+      }
+    }
+    else if (squares[selectedPiece].name === "King") {
+      //for castling
+      if (
+        (targetPosition === 2 || targetPosition === 6 || targetPosition === 58 || targetPosition === 62) 
+        && (gameState.whiteKingFirstMove || gameState.blackKingFirstMove)
+      ) {
+        dispatchGameAction([
+          "movePiece",
+          { 
+            squares, 
+            whiteFallenSoldiers, 
+            blackFallenSoldiers, 
+            whiteRemainingPieces, 
+            blackRemainingPieces,
+            disabled: false,
+            piece: "king",
+            targetPosition,
+            selectedPiece,
+            castle: true
+          }
+        ]);
+      }
+      else {
+        if (squares[targetPosition] !== null) {
+          if (gameState.turn === "white") {
+            blackFallenSoldiers.push(squares[targetPosition]);
+            blackRemainingPieces -= 1;
+          } 
+          else {
+            whiteFallenSoldiers.push(squares[targetPosition]);
+            whiteRemainingPieces -= 1;
+          }
+        }
+
+        dispatchGameAction([
+          "movePiece",
+          { 
+            squares, 
+            whiteFallenSoldiers, 
+            blackFallenSoldiers, 
+            whiteRemainingPieces, 
+            blackRemainingPieces,
+            disabled: false,
+            piece: "king",
+            targetPosition,
+            selectedPiece
+          }
+        ]);
+      }
+    }
+    else {
+      if (squares[targetPosition] !== null) {
+        if (gameState.turn === "white") {
+          blackFallenSoldiers.push(squares[targetPosition]);
+          blackRemainingPieces -= 1;
+        } else {
+          whiteFallenSoldiers.push(squares[targetPosition]);
+          whiteRemainingPieces -= 1;
+        }
+      }
+
+      dispatchGameAction([
+        "movePiece",
+        { 
+          squares, 
+          whiteFallenSoldiers, 
+          blackFallenSoldiers, 
+          whiteRemainingPieces, 
+          blackRemainingPieces,
+          disabled: false,
+          piece: "rook",
+          targetPosition,
+          selectedPiece
+        }
+      ]);
+    }
+  };
+
   useEffect(() => {
     function onConnect(data: any) {
       dispatchGameAction(["connected", data.id]);
