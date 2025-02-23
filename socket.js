@@ -125,12 +125,17 @@ module.exports = (io) => {
 
     //sending moves between players
     client.on("moves", data => {
-      const opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+      const opponentId = data.userId === games[data.gameId].player1 
+        ? games[data.gameId].player2 
+        : games[data.gameId].player1;
       if (data.changeTurn && data.check) {
-        games[data.gameId].whose_turn = games[data.gameId].whose_turn === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+        games[data.gameId].whose_turn = games[data.gameId].whose_turn === games[data.gameId].player1 
+          ? games[data.gameId].player2 
+          : games[data.gameId].player1;
         io.to(opponentId).emit("updateGameData", { turn: games[data.gameId].whose_turn, i: data.i });
         io.to(data.userId).emit("updateBoard");
-      } else if (!data.changeTurn && data.check) {
+      } 
+      else if (!data.changeTurn && data.check) {
         io.to(opponentId).emit("updateGameData", { turn: games[data.gameId].whose_turn, i: data.i });
       }
     });

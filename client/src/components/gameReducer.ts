@@ -15,8 +15,6 @@ export interface GameState {
   lastTurnPawnPosition: any,
   firstMove: any,
   highLightMoves: number[],
-  allPossibleMovesWhite: number[],
-  allPossibleMovesBlack: number[],
   whiteKingFirstMove: boolean,
   blackKingFirstMove: boolean,
   whiteRookFirstMoveLeft: boolean,
@@ -62,8 +60,6 @@ export type GameAction =
         squares: any[];
         whiteFallenSoldiers: any;
         blackFallenSoldiers: any;
-        allPossibleMovesWhite: number[];
-        allPossibleMovesBlack: number[];
       }
     ]
   | [
@@ -72,8 +68,6 @@ export type GameAction =
         squares: any[];
         firstMove: boolean | undefined;
         lastTurnPawnPosition: number;
-        allPossibleMovesWhite: number[];
-        allPossibleMovesBlack: number[];
       }
     ]
   | [
@@ -84,27 +78,13 @@ export type GameAction =
       'updateBoard',
       { squares: any[]; tempSquares: any[]; i: number }
     ]
-  | [
-      'moveKing',
-      { squares: any[]; i: number }
-    ]
-  | [
-      'moveRook',
-      {
-        squares: any[];
-        i: number;
-        allPossibleMovesWhite: number[];
-        allPossibleMovesBlack: number[];
-      }
-    ]
+  | ['moveKing', { squares: any[]; i: number }]
+  | ['moveRook', { squares: any[]; i: number; }]
   | ['gameResult', string]
   | ['updatePieces', { whiteRemainingPieces: number; blackRemainingPieces: number }]
   | ['registrationConfirmation', boolean]
   | ['hideDrawButton']
-  | [
-      'gameStartConfirmation',
-      { game_data: any; status: boolean; game_id: string }
-    ];
+  | ['gameStartConfirmation', { game_data: any; status: boolean; game_id: string }];
 
 
 export const initialGameState: GameState = {
@@ -121,9 +101,6 @@ export const initialGameState: GameState = {
   //firstMove true means last turn enemy's pawn moved for the first time and it moved 2 squares forward. for en pasaant
   firstMove: undefined,
   highLightMoves: [],
-  //for castle
-  allPossibleMovesWhite: [],
-  allPossibleMovesBlack: [],
   whiteKingFirstMove: true,
   blackKingFirstMove: true,
   whiteRookFirstMoveLeft: true,
@@ -231,8 +208,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         squares: newValue.squares,
         whiteFallenSoldiers: newValue.whiteFallenSoldiers,
         blackFallenSoldiers: newValue.blackFallenSoldiers,
-        allPossibleMovesWhite: newValue.allPossibleMovesWhite,
-        allPossibleMovesBlack: newValue.allPossibleMovesBlack
+        disabled: true
       };
 
     case "moves":
@@ -244,8 +220,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         squares: newValue.squares,
         firstMove: newValue.firstMove,
         lastTurnPawnPosition: newValue.lastTurnPawnPosition,
-        allPossibleMovesWhite: newValue.allPossibleMovesWhite,
-        allPossibleMovesBlack: newValue.allPossibleMovesBlack
+        disabled: true
       };
 
     case "addToFallenSoldierList":
@@ -302,7 +277,8 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         status: "",
         whiteKingFirstMove,
         blackKingFirstMove,
-        highLightMoves: []
+        highLightMoves: [],
+        disabled: true
       };
 
     case "moveRook":
@@ -345,12 +321,11 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         whiteRookFirstMoveRight,
         blackRookFirstMoveLeft,
         blackRookFirstMoveRight,
-        allPossibleMovesWhite: newValue.allPossibleMovesWhite,
-        allPossibleMovesBlack: newValue.allPossibleMovesBlack,
         sourceSelection: -1,
         squares: newValue.squares,
         status: "",
-        highLightMoves: []
+        highLightMoves: [],
+        disabled: true
       };
 
     case "gameResult":

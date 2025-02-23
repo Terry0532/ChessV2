@@ -74,12 +74,13 @@ const Game = () => {
         //check if castle is possible and add possible moves to highLightMoves array
         if (i === 4 || i === 60) {
           if (gameState.turn === "white" && gameState.whiteKingFirstMove) {
+            const allPossibleMovesBlack = getAllPossibleMoves(squares, Player.Black);
             if (
               gameState.whiteRookFirstMoveLeft &&
               squares[57] === null &&
               squares[58] === null &&
               squares[59] === null &&
-              !gameState.allPossibleMovesBlack.some((element: number) =>
+              !allPossibleMovesBlack.some((element: number) =>
                 [57, 58, 59].includes(element)
               )
             ) {
@@ -89,7 +90,7 @@ const Game = () => {
               gameState.whiteRookFirstMoveRight &&
               squares[61] === null &&
               squares[62] === null &&
-              !gameState.allPossibleMovesBlack.some((element: number) =>
+              !allPossibleMovesBlack.some((element: number) =>
                 [61, 62].includes(element)
               )
             ) {
@@ -100,12 +101,13 @@ const Game = () => {
             gameState.turn === "black" &&
             gameState.blackKingFirstMove
           ) {
+            const allPossibleMovesWhite = getAllPossibleMoves(squares, Player.White);
             if (
               gameState.blackRookFirstMoveLeft &&
               squares[1] === null &&
               squares[2] === null &&
               squares[3] === null &&
-              !gameState.allPossibleMovesWhite.some((element: number) =>
+              !allPossibleMovesWhite.some((element: number) =>
                 [1, 2, 3].includes(element)
               )
             ) {
@@ -115,7 +117,7 @@ const Game = () => {
               gameState.blackRookFirstMoveRight &&
               squares[5] === null &&
               squares[6] === null &&
-              !gameState.allPossibleMovesWhite.some((element: number) =>
+              !allPossibleMovesWhite.some((element: number) =>
                 [5, 6].includes(element)
               )
             ) {
@@ -238,18 +240,15 @@ const Game = () => {
             squares[gameState.lastTurnPawnPosition] = null;
             squares[gameState.sourceSelection] = null;
 
-            //update the possible moves in order to check if next player can castle or not
-            const allPossibleMovesWhite = getAllPossibleMoves(squares, Player.White);
-            const allPossibleMovesBlack = getAllPossibleMoves(squares, Player.Black);
             dispatchGameAction([
               "enpassant",
-              { squares, whiteFallenSoldiers, blackFallenSoldiers, allPossibleMovesWhite, allPossibleMovesBlack }
+              { squares, whiteFallenSoldiers, blackFallenSoldiers }
             ]);
             emitGameEvent("moves", { i, changeTurn: true, check });
           } 
           else {
             //check if current pawn is moving for the first time and moving 2 squares forward
-            let firstMove;
+            let firstMove: boolean;
             if (squares[gameState.sourceSelection].name === "Pawn") {
               if (
                 squares[gameState.sourceSelection].player === 1 &&
@@ -277,9 +276,6 @@ const Game = () => {
             addToFallenSoldierList(i, squares, whiteFallenSoldiers, blackFallenSoldiers);
             squares = movePiece(i, squares, gameState.sourceSelection);
 
-            //update the possible moves in order to check if next player can castle or not
-            const allPossibleMovesWhite = getAllPossibleMoves(squares, Player.White);
-            const allPossibleMovesBlack = getAllPossibleMoves(squares, Player.Black);
             //to convert pawn that reach other side of the chess board
             if ([0, 1, 2, 3, 4, 5, 6, 7, 56, 57, 58, 59, 60, 61, 62, 63].includes(i)) {
               const tempSquares = squares.concat();
@@ -335,8 +331,7 @@ const Game = () => {
             } 
             else {
               dispatchGameAction([
-                "moves", 
-                { squares, firstMove, lastTurnPawnPosition, allPossibleMovesWhite, allPossibleMovesBlack }
+                "moves", { squares, firstMove, lastTurnPawnPosition }
               ]);
               emitGameEvent("moves", { i, changeTurn: true, check });
             }
@@ -411,10 +406,7 @@ const Game = () => {
           addToFallenSoldierList(i, squares, whiteFallenSoldiers, blackFallenSoldiers);
           squares = movePiece(i, squares, gameState.sourceSelection);
 
-          //update the possible moves in order to check if next player can castle or not
-          const allPossibleMovesWhite = getAllPossibleMoves(squares, Player.White);
-          const allPossibleMovesBlack = getAllPossibleMoves(squares, Player.Black);
-          dispatchGameAction(["moveRook", { i, squares, allPossibleMovesWhite, allPossibleMovesBlack }]);
+          dispatchGameAction(["moveRook", { i, squares }]);
           emitGameEvent("moves", { i, changeTurn: true, check });
         } else {
           dispatchGameAction(["wrongMove", squares]);
