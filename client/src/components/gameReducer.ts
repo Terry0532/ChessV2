@@ -151,6 +151,15 @@ export const initialGameState: GameState = {
 };
 
 export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
+  let blackKingPosition: number;
+  let whiteKingPosition: number;
+  let whiteKingFirstMove: boolean;
+  let blackKingFirstMove: boolean;
+  let whiteRookFirstMoveLeft: boolean;
+  let whiteRookFirstMoveRight: boolean;
+  let blackRookFirstMoveLeft: boolean;
+  let blackRookFirstMoveRight: boolean;
+
   const [type, newValue] = gameAction;
   console.log(type)
   console.log(newValue)
@@ -260,8 +269,8 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
       };
 
     case "moveKing":
-      let whiteKingPosition = gameState.whiteKingPosition;
-      let blackKingPosition = gameState.blackKingPosition;
+      whiteKingPosition = gameState.whiteKingPosition;
+      blackKingPosition = gameState.blackKingPosition;
       if (gameState.turn === "white") {
         whiteKingPosition = newValue.i;
       }
@@ -269,8 +278,8 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         blackKingPosition = newValue.i;
       }
 
-      let whiteKingFirstMove = gameState.whiteKingFirstMove;
-      let blackKingFirstMove = gameState.blackKingFirstMove;
+      whiteKingFirstMove = gameState.whiteKingFirstMove;
+      blackKingFirstMove = gameState.blackKingFirstMove;
       if (
         newValue.squares[newValue.i].name === "King" &&
         gameState.sourceSelection === 60 &&
@@ -301,10 +310,10 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
 
     case "moveRook":
       //to record if rook has been moved or not. for castle.
-      let whiteRookFirstMoveLeft = gameState.whiteRookFirstMoveLeft;
-      let whiteRookFirstMoveRight = gameState.whiteRookFirstMoveRight;
-      let blackRookFirstMoveLeft = gameState.blackRookFirstMoveLeft;
-      let blackRookFirstMoveRight = gameState.blackRookFirstMoveRight;
+      whiteRookFirstMoveLeft = gameState.whiteRookFirstMoveLeft;
+      whiteRookFirstMoveRight = gameState.whiteRookFirstMoveRight;
+      blackRookFirstMoveLeft = gameState.blackRookFirstMoveLeft;
+      blackRookFirstMoveRight = gameState.blackRookFirstMoveRight;
       if (
         newValue.squares[newValue.i].name === "Rook" &&
         gameState.sourceSelection === 56 &&

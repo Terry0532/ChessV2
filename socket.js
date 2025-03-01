@@ -128,16 +128,11 @@ module.exports = (io) => {
       const opponentId = data.userId === games[data.gameId].player1 
         ? games[data.gameId].player2 
         : games[data.gameId].player1;
-      if (data.changeTurn && data.check) {
-        games[data.gameId].whose_turn = games[data.gameId].whose_turn === games[data.gameId].player1 
-          ? games[data.gameId].player2 
-          : games[data.gameId].player1;
-        io.to(opponentId).emit("updateGameData", { turn: games[data.gameId].whose_turn, i: data.i });
-        io.to(data.userId).emit("updateBoard");
-      } 
-      else if (!data.changeTurn && data.check) {
-        io.to(opponentId).emit("updateGameData", { turn: games[data.gameId].whose_turn, i: data.i });
-      }
+
+      io.to(opponentId).emit(
+        "updateGameData", 
+        { selectedPiece: data.selectedPiece, targetPosition: data.targetPosition }
+      );
     });
 
     //send the game result to opponent
