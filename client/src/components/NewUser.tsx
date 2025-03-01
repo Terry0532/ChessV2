@@ -10,7 +10,8 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation }) =
   const [name, setName] = useState<string>("");
   const [nameTaken, setNameTaken] = useState<boolean>(false);
   
-  const submitName = () => {
+  const submitName = (e) => {
+    e.preventDefault();
     socket.emit("checkUserDetail", { name });
   };
 
@@ -33,7 +34,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation }) =
   }, []);
 
   return (
-    <Form>
+    <Form onSubmit={submitName}>
       <Form.Group >
         <Form.Label>Enter Your Name</Form.Label>
         <Form.Control type="text" onChange={onNameChange} placeholder="Name" />
