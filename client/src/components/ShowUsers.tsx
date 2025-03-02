@@ -28,7 +28,9 @@ const ShowUsers: React.FC<ShowUsersProps> = ({ socket, gameStartConfirmation, ga
       setOpponents(data);
     };
     function newOpponentAdded(data: Opponent) {
-      setOpponents([...opponents, data]);
+      if (!opponents.some((opponent) => opponent.id === data.id)) {
+        setOpponents([...opponents, data]);
+      }
     };
     function opponentDisconnected(data: Opponent) {
       let flag = false;

@@ -73,7 +73,9 @@ module.exports = (io) => {
           io.to(sockets[client.id].game_id).emit('opponentLeft', {});
           players[sockets[games[sockets[client.id].game_id].player1].name].played--;
           players[sockets[games[sockets[client.id].game_id].player2].name].played--;
-          io.sockets.connected[client.id === games[sockets[client.id].game_id].player1 ? games[sockets[client.id].game_id].player2 : games[sockets[client.id].game_id].player1].leave(sockets[client.id].game_id);
+          io.sockets.connected[client.id === games[sockets[client.id].game_id].player1 
+            ? games[sockets[client.id].game_id].player2 
+            : games[sockets[client.id].game_id].player1].leave(sockets[client.id].game_id);
           delete games[sockets[client.id].game_id];
         }
       }
@@ -219,17 +221,16 @@ module.exports = (io) => {
     });
 
     client.on("leaveGame", data => {
-      const opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
-      io.to(data.userId).emit("toLobby");
+      const opponentId = data.userId === games[data.gameId].player1 
+        ? games[data.gameId].player2 : games[data.gameId].player1;
+      io.to(opponentId).emit("toLobby");
       sockets[data.userId].is_playing = false;
       sockets[data.userId].game_id = null;
-      io.sockets.connected[data.userId].leave(data);
-      if (!data.check) {
-        io.to(opponentId).emit("disconnectButton");
-      }
-      if (data.check) {
-        delete games[data.gameId];
-      }
+      sockets[opponentId].is_playing = false;
+      sockets[opponentId].game_id = null;
+      io.sockets.connected[data.userId].leave(data.gameId);
+      io.sockets.connected[opponentId].leave(data.gameId);
+      delete games[data.gameId];
     });
 
     client.on("askDraw", data => {

@@ -85,6 +85,7 @@ export type GameAction =
   | ["updatePieces", { whiteRemainingPieces: number; blackRemainingPieces: number; }]
   | ["registrationConfirmation", boolean]
   | ["hideDrawButton"]
+  | ["toLobby"]
   | ["gameStartConfirmation", { game_data: any; status: boolean; game_id: string; }]
   | [
       "movePiece", 
@@ -209,13 +210,11 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         sourceSelection: -1,
         status: "",
         turn: "white",
-        white: 16,
-        black: 16,
+        whiteRemainingPieces: 16,
+        blackRemainingPieces: 16,
         lastTurnPawnPosition: undefined,
         firstMove: undefined,
         highLightMoves: [],
-        allPossibleMovesWhite: [],
-        allPossibleMovesBlack: [],
         whiteKingFirstMove: true,
         blackKingFirstMove: true,
         whiteRookFirstMoveLeft: true,
@@ -538,6 +537,46 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         whiteRookFirstMoveRight,
         blackRookFirstMoveLeft,
         blackRookFirstMoveRight,
+      };
+
+    case "toLobby":
+      return {
+        ...gameState,
+        squares: initialiseChessBoard(),
+        whiteFallenSoldiers: [],
+        blackFallenSoldiers: [],
+        player: 1,
+        sourceSelection: -1,
+        status: "",
+        turn: "white",
+        whiteRemainingPieces: 16,
+        blackRemainingPieces: 16,
+        lastTurnPawnPosition: undefined,
+        firstMove: undefined,
+        highLightMoves: [],
+        whiteKingFirstMove: true,
+        blackKingFirstMove: true,
+        whiteRookFirstMoveLeft: true,
+        whiteRookFirstMoveRight: true,
+        blackRookFirstMoveLeft: true,
+        blackRookFirstMoveRight: true,
+        whiteKingPosition: 60,
+        blackKingPosition: 4,
+        tempSquares: [],
+        convertPawnPosition: undefined,
+        disabled: false,
+        hideButton: "none",
+        startGame: false,
+        gameId: null,
+        gameData: null,
+        rotateBoard: "",
+        disableNewGameButton: false,
+        newGameButton: "New Game",
+        leaveButton: "Leave Game",
+        disableLeaveGameButton: false,
+        continueGame: false,
+        hideResignButton: "",
+        hideDrawButton: ""
       };
 
     default:

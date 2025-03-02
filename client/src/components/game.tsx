@@ -34,8 +34,9 @@ const Game = () => {
     }
   };
 
-  const disconnect = () => {
+  const leaveGame = () => {
     emitGameEvent("leaveGame", { check: false });
+    dispatchGameAction(["toLobby"]);
   };
 
   const resignButton = () => {
@@ -921,10 +922,6 @@ const Game = () => {
         }
       ]);
     }
-    function disconnectButton() {
-      alert("Opponent left");
-      emitGameEvent("leaveGame", { check: true });
-    }
     function drawButton() {
       if (window.confirm("Draw?")) {
         dispatchGameAction(["gameover", "Draw"]);
@@ -937,6 +934,10 @@ const Game = () => {
     function gameover(data: any) {
       dispatchGameAction(["gameover", data.result]);
     }
+    function toLobby() {
+      alert("Opponent left");
+      dispatchGameAction(["toLobby"]);
+    }
 
     socket.on("connected", onConnect);
     socket.on("updateGameData", updateGameData);
@@ -945,8 +946,8 @@ const Game = () => {
     socket.on("gameover", gameover);
     socket.on("continueGame", continueGame);
     socket.on("nextGameData", nextGameData);
-    socket.on("disconnectButton", disconnectButton);
     socket.on("drawButton", drawButton);
+    socket.on("toLobby", toLobby);
 
     return () => {
       socket.off("connected", onConnect);
@@ -956,8 +957,8 @@ const Game = () => {
       socket.off("gameover", gameover);
       socket.off("continueGame", continueGame);
       socket.off("nextGameData", nextGameData);
-      socket.off("disconnectButton", disconnectButton);
       socket.off("drawButton", drawButton);
+      socket.off("toLobby", toLobby);
     };
     // eslint-disable-next-line
   }, [gameState]);
@@ -998,7 +999,7 @@ const Game = () => {
                 {gameState.newGameButton}
               </button>
               <button
-                onClick={disconnect}
+                onClick={leaveGame}
                 disabled={gameState.disableLeaveGameButton}
                 style={{ display: gameState.hideButton }}
               >
