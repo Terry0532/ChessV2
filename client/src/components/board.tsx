@@ -16,7 +16,7 @@ const Board: React.FC<BoardProps> = ({ squares, onClick, disabled, rotateBoard }
 
   const renderSquare = (i: number, squareShade: string) => {
     return (
-      <div className="button">
+      <div key={i} className="button">
         <button
           className={"square " + squareShade + " " + rotateBoard}
           onClick={() => onClick(i)}
@@ -31,10 +31,11 @@ const Board: React.FC<BoardProps> = ({ squares, onClick, disabled, rotateBoard }
   for (let i = 0; i < 8; i++) {
     const squareRows = [];
     for (let j = 0; j < 8; j++) {
-      const squareShade = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j)) ? "light-square" : "dark-square";
+      const squareShade = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j)) 
+        ? "light-square" : "dark-square";
       squareRows.push(renderSquare((i * 8) + j, squareShade));
     }
-    board.push(<div className="board-row">{squareRows}</div>);
+    board.push(<div key={i} className="board-row">{squareRows}</div>);
   }
 
   return (

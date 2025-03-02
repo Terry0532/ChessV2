@@ -166,16 +166,22 @@ module.exports = (io) => {
 
     //check if both players want to rematch
     client.on("newGame", data => {
-      const opponentId = data.userId === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+      const opponentId = data.userId === games[data.gameId].player1 
+        ? games[data.gameId].player2 : games[data.gameId].player1;
+
       if (data.check) {
         const gameId = uuidv4();
         sockets[games[data.gameId].player1].game_id = gameId;
         sockets[games[data.gameId].player2].game_id = gameId;
-        players[sockets[games[data.gameId].player1].name].played = players[sockets[games[data.gameId].player1].name].played + 1;
-        players[sockets[games[data.gameId].player2].name].played = players[sockets[games[data.gameId].player2].name].played + 1;
+        players[sockets[games[data.gameId].player1].name].played = 
+          players[sockets[games[data.gameId].player1].name].played + 1;
+        players[sockets[games[data.gameId].player2].name].played = 
+          players[sockets[games[data.gameId].player2].name].played + 1;
 
-        const whoseTurn = games[data.gameId][data.userId].side === "white" ? opponentId : data.userId;
-        const otherPlayerId = whoseTurn === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
+        const whoseTurn = games[data.gameId][data.userId].side === "white" 
+          ? opponentId : data.userId;
+        const otherPlayerId = whoseTurn === games[data.gameId].player1 
+          ? games[data.gameId].player2 : games[data.gameId].player1;
 
         games[gameId] = {
           player1: games[data.gameId].player1,
@@ -207,7 +213,7 @@ module.exports = (io) => {
         io.sockets.connected[games[data.gameId].player2].leave(data.gameId);
         delete games[data.gameId];
       }
-      if (!data.check) {
+      else {
         io.to(opponentId).emit("continueGame");
       }
     });

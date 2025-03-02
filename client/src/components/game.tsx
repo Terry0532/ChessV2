@@ -911,6 +911,16 @@ const Game = () => {
     function continueGame() {
       dispatchGameAction(["continueGame"]);
     }
+    function nextGameData(data: any) {
+      dispatchGameAction([
+        "nextGameData", 
+        {
+          rotateBoard: data.game_data.whose_turn !== gameState.userId ? "rotate" : "",
+          gameId: data.game_id,
+          gameData: data.game_data
+        }
+      ]);
+    }
     function disconnectButton() {
       alert("Opponent left");
       emitGameEvent("leaveGame", { check: true });
@@ -934,6 +944,7 @@ const Game = () => {
     socket.on("opponentLeft", opponentLeft);
     socket.on("gameover", gameover);
     socket.on("continueGame", continueGame);
+    socket.on("nextGameData", nextGameData);
     socket.on("disconnectButton", disconnectButton);
     socket.on("drawButton", drawButton);
 
@@ -944,6 +955,7 @@ const Game = () => {
       socket.off("opponentLeft", opponentLeft);
       socket.off("gameover", gameover);
       socket.off("continueGame", continueGame);
+      socket.off("nextGameData", nextGameData);
       socket.off("disconnectButton", disconnectButton);
       socket.off("drawButton", drawButton);
     };

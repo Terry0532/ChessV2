@@ -49,6 +49,7 @@ export type GameAction =
   | ["opponentLeft"]
   | ["gameover", string]
   | ["continueGame"]
+  | ["nextGameData", { rotateBoard: string; gameId: string, gameData: any }]
   | ["newGame"]
   | ["updateStatus", string]
   | ["selectPiece", any]
@@ -192,6 +193,47 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         leaveButton: "No",
         status: "Do you want to play again?",
         continueGame: true
+      };
+
+    case "nextGameData":
+      return {
+        ...gameState,
+        gameId: newValue.gameId,
+        gameData: newValue.gameData,
+        rotateBoard: newValue.rotateBoard,
+        disabled: newValue.rotateBoard ? true : false,
+        squares: initialiseChessBoard(),
+        whiteFallenSoldiers: [],
+        blackFallenSoldiers: [],
+        player: 1,
+        sourceSelection: -1,
+        status: "",
+        turn: "white",
+        white: 16,
+        black: 16,
+        lastTurnPawnPosition: undefined,
+        firstMove: undefined,
+        highLightMoves: [],
+        allPossibleMovesWhite: [],
+        allPossibleMovesBlack: [],
+        whiteKingFirstMove: true,
+        blackKingFirstMove: true,
+        whiteRookFirstMoveLeft: true,
+        whiteRookFirstMoveRight: true,
+        blackRookFirstMoveLeft: true,
+        blackRookFirstMoveRight: true,
+        whiteKingPosition: 60,
+        blackKingPosition: 4,
+        tempSquares: [],
+        convertPawnPosition: undefined,
+        hideButton: "none",
+        disableNewGameButton: false,
+        newGameButton: "New Game",
+        leaveButton: "Leave Game",
+        disableLeaveGameButton: false,
+        continueGame: false,
+        hideResignButton: "",
+        hideDrawButton: ""
       };
 
     case "newGame":
