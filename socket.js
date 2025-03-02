@@ -146,19 +146,19 @@ module.exports = (io) => {
         games[data.gameId].game_status = "draw";
         io.to(opponentId).emit("gameover", { result: data.result });
       }
-      if (data.result === "Draw") {
+      else if (data.result === "Draw") {
         players[games[data.gameId][games[data.gameId].player1].name].draw++;
         players[games[data.gameId][games[data.gameId].player2].name].draw++;
         games[data.gameId].game_status = "draw";
         io.to(opponentId).emit("gameover", { result: data.result });
       }
-      if (data.result === "White Won") {
+      else if (data.result === "White Won") {
         games[data.gameId].game_winner = games[data.gameId].whose_turn === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
         games[data.gameId].game_status = "won";
         players[games[data.gameId][games[data.gameId].game_winner].name].won++;
         io.to(opponentId).emit("gameover", { result: data.result });
       }
-      if (data.result === "Black Won") {
+      else if (data.result === "Black Won") {
         games[data.gameId].game_winner = games[data.gameId].whose_turn === games[data.gameId].player1 ? games[data.gameId].player2 : games[data.gameId].player1;
         games[data.gameId].game_status = "won";
         players[games[data.gameId][games[data.gameId].game_winner].name].won++;

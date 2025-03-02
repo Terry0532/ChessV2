@@ -40,11 +40,9 @@ const Game = () => {
   };
 
   const resignButton = () => {
-    if (gameState.disabled) {
-      const result = gameState.turn === "white" ? "White Won" : "Black Won";
-      dispatchGameAction(["gameover", result]);
-      emitGameEvent("gameResult", { result });
-    }
+    const result = gameState.rotateBoard === "rotate" ? "White Won" : "Black Won";
+    dispatchGameAction(["gameover", result]);
+    emitGameEvent("gameResult", { result });
   };
 
   const drawButton = () => {
