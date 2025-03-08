@@ -4,11 +4,15 @@ import { Form, Button } from 'react-bootstrap';
 type NewUserProps = {
   socket: any;
   registrationConfirmation: (data: boolean) => void;
+  startOfflineGame: () => void;
 };
 
-const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation }) => {
+export enum GameMode { Online, Offline };
+
+const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, startOfflineGame }) => {
   const [name, setName] = useState<string>("");
   const [nameTaken, setNameTaken] = useState<boolean>(false);
+  const [gameMode, setGameMode] = useState<GameMode>();
   
   const submitName = (e) => {
     e.preventDefault();
@@ -17,6 +21,17 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation }) =
 
   const onNameChange = (e) => {
     setName(e.target.value);
+  };
+
+  const selectGameMode = (mode: GameMode) => {
+    if (mode === GameMode.Online) {
+      setGameMode(GameMode.Online);
+      socket.connect();
+    }
+    else if (mode === GameMode.Offline) {
+      setGameMode(GameMode.Offline);
+      startOfflineGame();
+    }
   };
 
   useEffect(() => {
@@ -34,17 +49,36 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation }) =
   }, []);
 
   return (
-    <Form onSubmit={submitName}>
-      <Form.Group >
-        <Form.Label>Enter Your Name</Form.Label>
-        <Form.Control type="text" onChange={onNameChange} placeholder="Name" />
-        <Form.Text className="text-muted"></Form.Text>
-        <Button onClick={submitName} variant="primary" type="button">
-          Submit
-        </Button>
-        {nameTaken ? <p>This username is taken, choose a different username.</p> : <p></p>}
-      </Form.Group>
-    </Form>
+    <div>
+      {gameMode === undefined && (
+        <div>
+          <Button 
+            onClick={() => selectGameMode(GameMode.Online)} 
+            variant="primary" 
+            type="button"
+            style={{ marginRight: 5 }}
+          >
+            Online Mode
+          </Button>
+          <Button onClick={() => selectGameMode(GameMode.Offline)} variant="primary" type="button">
+            Offline Mode
+          </Button>
+        </div>
+      )}
+      {gameMode === GameMode.Online && (
+        <Form onSubmit={submitName}>
+          <Form.Group >
+            <Form.Label>Enter Your Name</Form.Label>
+            <Form.Control type="text" onChange={onNameChange} placeholder="Name" />
+            <Form.Text className="text-muted"></Form.Text>
+            <Button onClick={submitName} variant="primary" type="button">
+              Submit
+            </Button>
+            {nameTaken ? <p>This username is taken, choose a different username.</p> : <p></p>}
+          </Form.Group>
+        </Form>
+      )}
+    </div>
   );
 };
 

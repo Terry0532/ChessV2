@@ -25,7 +25,12 @@ const Game = () => {
   }
   
   const newGame = () => {
-    if (gameState.continueGame) {
+    if (gameState.offlineMode) {
+      dispatchGameAction(["nextGameData", {
+        rotateBoard: "", gameId: null, gameData: null
+      }]);
+    }
+    else if (gameState.continueGame) {
       emitGameEvent("newGame", { check: true });
     }
     else {
@@ -241,12 +246,15 @@ const Game = () => {
 
             dispatchGameAction([
               "enpassant",
-              { squares, whiteFallenSoldiers, blackFallenSoldiers }
+              { squares, whiteFallenSoldiers, blackFallenSoldiers, disabled: !gameState.offlineMode }
             ]);
-            emitGameEvent(
-              "moves", 
-              { selectedPiece: gameState.sourceSelection, targetPosition: i }
-            );
+
+            if (!gameState.offlineMode) {
+              emitGameEvent(
+                "moves", 
+                { selectedPiece: gameState.sourceSelection, targetPosition: i }
+              );
+            }
           } 
           else {
             //check if current pawn is moving for the first time and moving 2 squares forward
@@ -329,15 +337,14 @@ const Game = () => {
               
               //update chess board with convert choices and save chess board without choices in this.state.tempSquares
               dispatchGameAction(["updateBoard", { squares, tempSquares, i }]);
-              emitGameEvent(
-                "moves", 
-                { selectedPiece: gameState.sourceSelection, targetPosition: i }
-              );
             } 
             else {
               dispatchGameAction([
-                "moves", { squares, firstMove, lastTurnPawnPosition }
+                "moves", { squares, firstMove, lastTurnPawnPosition, disabled: !gameState.offlineMode }
               ]);
+            }
+
+            if (!gameState.offlineMode) {
               emitGameEvent(
                 "moves", 
                 { selectedPiece: gameState.sourceSelection, targetPosition: i }
@@ -375,11 +382,14 @@ const Game = () => {
           }
 
           //to record king has been moved or not. for castle
-          dispatchGameAction(["moveKing", { i, squares }]);
-          emitGameEvent(
-            "moves", 
-            { selectedPiece: gameState.sourceSelection, targetPosition: i }
-          );
+          dispatchGameAction(["moveKing", { i, squares, disabled: !gameState.offlineMode }]);
+
+          if (!gameState.offlineMode) {
+            emitGameEvent(
+              "moves", 
+              { selectedPiece: gameState.sourceSelection, targetPosition: i }
+            );
+          }
         } 
         else if (gameState.highLightMoves.includes(i)) {
           //update number of pieces
@@ -395,11 +405,14 @@ const Game = () => {
           squares = movePiece(i, squares, gameState.sourceSelection);
 
           //to record king has been moved or not. for castle
-          dispatchGameAction(["moveKing", { i, squares }]);
-          emitGameEvent(
-            "moves", 
-            { selectedPiece: gameState.sourceSelection, targetPosition: i }
-          );
+          dispatchGameAction(["moveKing", { i, squares, disabled: !gameState.offlineMode }]);
+
+          if (!gameState.offlineMode) {
+            emitGameEvent(
+              "moves", 
+              { selectedPiece: gameState.sourceSelection, targetPosition: i }
+            );
+          }
         } else {
           dispatchGameAction(["wrongMove", squares]);
         }
@@ -418,11 +431,14 @@ const Game = () => {
           addToFallenSoldierList(i, squares, whiteFallenSoldiers, blackFallenSoldiers);
           squares = movePiece(i, squares, gameState.sourceSelection);
 
-          dispatchGameAction(["moveRook", { i, squares }]);
-          emitGameEvent(
-            "moves", 
-            { selectedPiece: gameState.sourceSelection, targetPosition: i }
-          );
+          dispatchGameAction(["moveRook", { i, squares, disabled: !gameState.offlineMode }]);
+
+          if (!gameState.offlineMode) {
+            emitGameEvent(
+              "moves", 
+              { selectedPiece: gameState.sourceSelection, targetPosition: i }
+            );
+          }
         } else {
           dispatchGameAction(["wrongMove", squares]);
         }
@@ -468,20 +484,23 @@ const Game = () => {
             }
           }
         }
-        const kingPosition =
-          turn === "white"
-            ? gameState.whiteKingPosition
-            : gameState.blackKingPosition;
+        const kingPosition = turn === "white"
+          ? gameState.whiteKingPosition
+          : gameState.blackKingPosition;
 
         //if next play doesn't have any possible moves then winner or stalemate
         if (temp.length === 0) {
+          let result: string;
+
           if (!squares[i].possibleMoves(i, squares).includes(kingPosition)) {
-            const result = "Stalemate Draw";
-            dispatchGameAction(["gameResult", result]);
-            emitGameEvent("gameResult", { result });
+            result = "Stalemate Draw";
           } else {
-            const result = turn === "white" ? "Black Won" : "White Won";
-            dispatchGameAction(["gameResult", result]);
+            result = turn === "white" ? "Black Won" : "White Won";
+          }
+
+          dispatchGameAction(["gameResult", result]);
+
+          if (!gameState.offlineMode) {
             emitGameEvent("gameResult", { result });
           }
         }
@@ -539,14 +558,20 @@ const Game = () => {
             }
             if (temp) {
               dispatchGameAction(["gameResult", result]);
-              emitGameEvent("gameResult", { result });
+
+              if (!gameState.offlineMode) {
+                emitGameEvent("gameResult", { result });
+              }
             }
           }
 
           //king versus king draw
           if (blackRemainingPieces === 1 && whiteRemainingPieces === 1) {
             dispatchGameAction(["gameResult", result]);
-            emitGameEvent("gameResult", { result });
+
+            if (!gameState.offlineMode) {
+              emitGameEvent("gameResult", { result });
+            }
           }
         }
       }
@@ -991,30 +1016,29 @@ const Game = () => {
               </div>
               <button
                 onClick={newGame}
-                disabled={gameState.disableNewGameButton}
                 style={{ display: gameState.hideButton }}
               >
                 {gameState.newGameButton}
               </button>
-              <button
-                onClick={leaveGame}
-                disabled={gameState.disableLeaveGameButton}
-                style={{ display: gameState.hideButton }}
-              >
+              <button onClick={leaveGame}>
                 {gameState.leaveButton}
               </button>
-              <button
-                onClick={resignButton}
-                style={{ display: gameState.hideResignButton }}
-              >
-                Resign
-              </button>
-              <button
-                onClick={drawButton}
-                style={{ display: gameState.hideDrawButton }}
-              >
-                Draw
-              </button>
+              {!gameState.offlineMode && (
+                <>
+                  <button
+                    onClick={resignButton}
+                    style={{ display: gameState.hideResignButton }}
+                  >
+                    Resign
+                  </button>
+                  <button
+                    onClick={drawButton}
+                    style={{ display: gameState.hideDrawButton }}
+                  >
+                    Draw
+                  </button>
+                </>
+              )}
             </div>
           </div>
           <div className="icons-attribution">
@@ -1053,6 +1077,7 @@ const Game = () => {
                 <NewUser
                   socket={socket}
                   registrationConfirmation={(data) => dispatchGameAction(["registrationConfirmation", data])}
+                  startOfflineGame={() => dispatchGameAction(["startOfflineGame"])}
                 />
               ) : (
                 <p>Loading...</p>

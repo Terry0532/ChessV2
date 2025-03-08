@@ -34,13 +34,12 @@ export interface GameState {
   gameData: any,
   userId: any,
   rotateBoard: string,
-  disableNewGameButton: boolean,
   newGameButton: string,
   leaveButton: string,
-  disableLeaveGameButton: boolean,
   continueGame: boolean,
   hideResignButton: string,
-  hideDrawButton: string
+  hideDrawButton: string,
+  offlineMode: boolean
 };
 
 export type GameAction =
@@ -51,6 +50,7 @@ export type GameAction =
   | ["continueGame"]
   | ["nextGameData", { rotateBoard: string; gameId: string, gameData: any }]
   | ["newGame"]
+  | ["startOfflineGame"]
   | ["updateStatus", string]
   | ["selectPiece", any]
   | ["convertPawn", any[]]
@@ -61,6 +61,7 @@ export type GameAction =
         squares: any[];
         whiteFallenSoldiers: any;
         blackFallenSoldiers: any;
+        disabled: boolean;
       }
     ]
   | [
@@ -69,6 +70,7 @@ export type GameAction =
         squares: any[];
         firstMove: boolean | undefined;
         lastTurnPawnPosition: number;
+        disabled: boolean;
       }
     ]
   | [
@@ -79,8 +81,8 @@ export type GameAction =
       "updateBoard",
       { squares: any[]; tempSquares: any[]; i: number; }
     ]
-  | ["moveKing", { squares: any[]; i: number; }]
-  | ["moveRook", { squares: any[]; i: number; }]
+  | ["moveKing", { squares: any[]; i: number; disabled: boolean; }]
+  | ["moveRook", { squares: any[]; i: number; disabled: boolean; }]
   | ["gameResult", string]
   | ["updatePieces", { whiteRemainingPieces: number; blackRemainingPieces: number; }]
   | ["registrationConfirmation", boolean]
@@ -143,13 +145,12 @@ export const initialGameState: GameState = {
   gameData: null,
   userId: null,
   rotateBoard: "",
-  disableNewGameButton: false,
   newGameButton: "New Game",
   leaveButton: "Leave Game",
-  disableLeaveGameButton: false,
   continueGame: false,
   hideResignButton: "",
-  hideDrawButton: ""
+  hideDrawButton: "",
+  offlineMode: false
 };
 
 export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
@@ -226,22 +227,15 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         tempSquares: [],
         convertPawnPosition: undefined,
         hideButton: "none",
-        disableNewGameButton: false,
         newGameButton: "New Game",
         leaveButton: "Leave Game",
-        disableLeaveGameButton: false,
         continueGame: false,
         hideResignButton: "",
         hideDrawButton: ""
       };
 
     case "newGame":
-      return {
-        ...gameState,
-        disableNewGameButton: true,
-        status: "Waiting for other player",
-        disableLeaveGameButton: true
-      };
+      return { ...gameState, status: "Waiting for other player" };
 
     case "updateStatus":
       return { ...gameState, status: newValue };
@@ -276,7 +270,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         squares: newValue.squares,
         whiteFallenSoldiers: newValue.whiteFallenSoldiers,
         blackFallenSoldiers: newValue.blackFallenSoldiers,
-        disabled: true
+        disabled: newValue.disabled
       };
 
     case "moves":
@@ -288,7 +282,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         squares: newValue.squares,
         firstMove: newValue.firstMove,
         lastTurnPawnPosition: newValue.lastTurnPawnPosition,
-        disabled: true
+        disabled: newValue.disabled
       };
 
     case "addToFallenSoldierList":
@@ -346,7 +340,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         whiteKingFirstMove,
         blackKingFirstMove,
         highLightMoves: [],
-        disabled: true
+        disabled: newValue.disabled
       };
 
     case "moveRook":
@@ -393,7 +387,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         squares: newValue.squares,
         status: "",
         highLightMoves: [],
-        disabled: true
+        disabled: newValue.disabled
       };
 
     case "gameResult":
@@ -570,14 +564,15 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         gameId: null,
         gameData: null,
         rotateBoard: "",
-        disableNewGameButton: false,
         newGameButton: "New Game",
         leaveButton: "Leave Game",
-        disableLeaveGameButton: false,
         continueGame: false,
         hideResignButton: "",
         hideDrawButton: ""
       };
+
+    case "startOfflineGame":
+      return { ...gameState, startGame: true, offlineMode: true };
 
     default:
       return gameState;
