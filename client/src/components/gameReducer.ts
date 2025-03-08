@@ -1,6 +1,7 @@
 import initialiseChessBoard from "../helpers/initialiseChessBoard";
 
 export enum Player { White = 1, Black = 2 };
+export enum PlayerAction { SELECT_PIECE, SELECT_PROMOTION_PIECE, EXECUTE_MOVE };
 
 export interface GameState {
   squares: any[],
@@ -39,7 +40,8 @@ export interface GameState {
   continueGame: boolean,
   hideResignButton: string,
   hideDrawButton: string,
-  offlineMode: boolean
+  offlineMode: boolean,
+  currentPlayerAction: PlayerAction
 };
 
 export type GameAction =
@@ -53,7 +55,7 @@ export type GameAction =
   | ["startOfflineGame"]
   | ["updateStatus", string]
   | ["selectPiece", any]
-  | ["convertPawn", any[]]
+  | ["convertPawn", { squares: any[]; disabled: boolean; }]
   | ["wrongMove", any[]]
   | [
       "enpassant",
@@ -79,7 +81,9 @@ export type GameAction =
     ]
   | [
       "updateBoard",
-      { squares: any[]; tempSquares: any[]; i: number; }
+      { 
+        squares: any[]; tempSquares: any[]; i: number; selectedPawnPosition: number;
+      }
     ]
   | ["moveKing", { squares: any[]; i: number; disabled: boolean; }]
   | ["moveRook", { squares: any[]; i: number; disabled: boolean; }]
@@ -105,6 +109,7 @@ export type GameAction =
         blackFallenSoldiers: any;
         whiteRemainingPieces: number; 
         blackRemainingPieces: number;
+        promotionPiece?: any;
       }
     ];
 
@@ -115,6 +120,7 @@ export const initialGameState: GameState = {
   blackFallenSoldiers: [],
   player: 1,
   sourceSelection: -1,
+  currentPlayerAction: PlayerAction.SELECT_PIECE,
   status: "",
   turn: "white",
   whiteRemainingPieces: 16,
@@ -209,6 +215,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         blackFallenSoldiers: [],
         player: 1,
         sourceSelection: -1,
+        currentPlayerAction: PlayerAction.SELECT_PIECE,
         status: "",
         turn: "white",
         whiteRemainingPieces: 16,
@@ -246,17 +253,27 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         squares: newValue.squares,
         status: "Choose destination for the selected piece",
         sourceSelection: newValue.i,
+        currentPlayerAction: PlayerAction.EXECUTE_MOVE,
         highLightMoves: newValue.highLightMoves
       };
 
     case "convertPawn":
-      return { ...changeTurn(gameState), status: "", convertPawnPosition: undefined, sourceSelection: -1, squares: newValue };
+      return { 
+        ...changeTurn(gameState), 
+        status: "", 
+        convertPawnPosition: undefined, 
+        // sourceSelection: -1, 
+        currentPlayerAction: PlayerAction.SELECT_PIECE,
+        squares: newValue.squares,
+        disabled: newValue.disabled
+      };
 
     case "wrongMove":
       return {
         ...gameState,
         status: "Wrong selection. Choose valid source and destination again.",
-        sourceSelection: -1,
+        // sourceSelection: -1,
+        currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue,
         highLightMoves: []
       };
@@ -266,7 +283,8 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         ...changeTurn(gameState),
         status: "",
         highLightMoves: [],
-        sourceSelection: -1,
+        // sourceSelection: -1,
+        currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue.squares,
         whiteFallenSoldiers: newValue.whiteFallenSoldiers,
         blackFallenSoldiers: newValue.blackFallenSoldiers,
@@ -278,7 +296,8 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         ...changeTurn(gameState),
         status: "",
         highLightMoves: [],
-        sourceSelection: -1,
+        // sourceSelection: -1,
+        currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue.squares,
         firstMove: newValue.firstMove,
         lastTurnPawnPosition: newValue.lastTurnPawnPosition,
@@ -292,10 +311,11 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         blackFallenSoldiers: newValue.blackFallenSoldiers
       };
 
-    case "updateBoard":
+    case "updateBoard"://only used for update board with promotion choice
       return {
         ...gameState,
-        sourceSelection: -2,
+        sourceSelection: newValue.selectedPawnPosition,
+        currentPlayerAction: PlayerAction.SELECT_PROMOTION_PIECE,
         status: "",
         highLightMoves: [],
         tempSquares: newValue.squares,
@@ -306,6 +326,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
     case "moveKing":
       whiteKingPosition = gameState.whiteKingPosition;
       blackKingPosition = gameState.blackKingPosition;
+
       if (gameState.turn === "white") {
         whiteKingPosition = newValue.i;
       }
@@ -315,6 +336,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
 
       whiteKingFirstMove = gameState.whiteKingFirstMove;
       blackKingFirstMove = gameState.blackKingFirstMove;
+
       if (
         newValue.squares[newValue.i].name === "King" &&
         gameState.sourceSelection === 60 &&
@@ -322,7 +344,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
       ) {
         whiteKingFirstMove = false;
       }
-      if (
+      else if (
         newValue.squares[newValue.i].name === "King" &&
         gameState.sourceSelection === 4 &&
         newValue.squares[newValue.i].player === 2
@@ -336,6 +358,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         blackKingPosition,
         squares: newValue.squares,
         sourceSelection: -1,
+        currentPlayerAction: PlayerAction.SELECT_PIECE,
         status: "",
         whiteKingFirstMove,
         blackKingFirstMove,
@@ -384,6 +407,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         blackRookFirstMoveLeft,
         blackRookFirstMoveRight,
         sourceSelection: -1,
+        currentPlayerAction: PlayerAction.SELECT_PROMOTION_PIECE,
         squares: newValue.squares,
         status: "",
         highLightMoves: [],
@@ -458,6 +482,11 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
           squares = movePiece(5, squares, 7);
         }
       }
+      else if (newValue.piece === "promotion") {
+        squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
+        squares[newValue.targetPosition] = newValue.promotionPiece;
+        squares[newValue.selectedPiece] = null;
+      }
       else {
         squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
       }
@@ -514,7 +543,8 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         ...changeTurn(gameState),
         status: "",
         highLightMoves: [],
-        sourceSelection: -1,
+        // sourceSelection: -1,
+        currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue.squares,
         whiteFallenSoldiers: newValue.whiteFallenSoldiers,
         blackFallenSoldiers: newValue.blackFallenSoldiers,
@@ -541,6 +571,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         blackFallenSoldiers: [],
         player: 1,
         sourceSelection: -1,
+        currentPlayerAction: PlayerAction.SELECT_PIECE,
         status: "",
         turn: "white",
         whiteRemainingPieces: 16,

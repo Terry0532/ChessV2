@@ -126,14 +126,18 @@ module.exports = (io) => {
     });
 
     //sending moves between players
-    client.on("moves", data => {
+    client.on("moves", (data) => {
       const opponentId = data.userId === games[data.gameId].player1 
         ? games[data.gameId].player2 
         : games[data.gameId].player1;
 
       io.to(opponentId).emit(
         "updateGameData", 
-        { selectedPiece: data.selectedPiece, targetPosition: data.targetPosition }
+        { 
+          selectedPiece: data.selectedPiece, 
+          targetPosition: data.targetPosition,
+          promotionPiece: data.promotionPiece
+        }
       );
     });
 

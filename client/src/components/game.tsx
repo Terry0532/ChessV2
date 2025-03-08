@@ -9,7 +9,7 @@ import Bishop from "../pieces/bishop.js";
 import Rook from "../pieces/rook.js";
 import NewUser from "./NewUser";
 import ShowUsers from "./ShowUsers";
-import { gameReducer, initialGameState, Player } from "./gameReducer";
+import { gameReducer, initialGameState, Player, PlayerAction } from "./gameReducer";
 import { socket } from '../socket.js';
 
 const Game = () => {
@@ -55,16 +55,19 @@ const Game = () => {
     emitGameEvent("askDraw");
   };
 
-  const handleBoardClick = (i: number, check: boolean) => {
+  const handleBoardClick = (i: number) => {
     let squares = gameState.squares;
     let whiteRemainingPieces = gameState.whiteRemainingPieces;
     let blackRemainingPieces = gameState.blackRemainingPieces;
-    if (gameState.sourceSelection === -1) {
+
+    if (gameState.currentPlayerAction === PlayerAction.SELECT_PIECE) {
       let highLightMoves: number[] = [];
+
       if (!squares[i] || squares[i].player !== gameState.player) {
         dispatchGameAction([
           "updateStatus", "Wrong selection. Choose player " + gameState.player + " pieces."
         ]);
+
         if (squares[i]) {
           squares[i].style = { ...squares[i].style, backgroundColor: "" };
         }
@@ -178,34 +181,7 @@ const Game = () => {
         dispatchGameAction(["selectPiece", { squares, i, highLightMoves }]);
       }
     } 
-    else if (gameState.sourceSelection === -2) {
-      //to convert pawn that reach other side of the chess board
-      if ([10, 11, 12, 13, 50, 51, 52, 53].includes(i)) {
-        //dehighlight
-        if (gameState.turn === "white") {
-          squares[10].style = { ...squares[10].style, backgroundColor: "" };
-          squares[11].style = { ...squares[11].style, backgroundColor: "" };
-          squares[12].style = { ...squares[12].style, backgroundColor: "" };
-          squares[13].style = { ...squares[13].style, backgroundColor: "" };
-        } else if (gameState.turn === "black") {
-          squares[50].style = { ...squares[50].style, backgroundColor: "" };
-          squares[51].style = { ...squares[51].style, backgroundColor: "" };
-          squares[52].style = { ...squares[52].style, backgroundColor: "" };
-          squares[53].style = { ...squares[53].style, backgroundColor: "" };
-        }
-
-        //convert pawn to player selected piece
-        const newSquares = gameState.tempSquares;
-        newSquares[gameState.convertPawnPosition] = squares[i];
-        dispatchGameAction(["convertPawn", newSquares]);
-        emitGameEvent("moves", { i, changeTurn: true, check });
-      } 
-      else {
-        dispatchGameAction(["wrongMove", squares]);
-        emitGameEvent("moves", { i, changeTurn: false, check });
-      }
-    } 
-    else if (gameState.sourceSelection > -1) {
+    else if (gameState.currentPlayerAction === PlayerAction.EXECUTE_MOVE) {
       //dehighlight selected piece
       squares[gameState.sourceSelection].style = {
         ...squares[gameState.sourceSelection].style,
@@ -218,6 +194,7 @@ const Game = () => {
       if (squares[gameState.sourceSelection].name === "Pawn") {
         squares = dehighlight(squares);
         const canEnpassant = enpassant(gameState.sourceSelection);
+
         if (gameState.highLightMoves.includes(i)) {
           //if en passant is available and player decided to use it, else proceed without it
           if (
@@ -259,27 +236,23 @@ const Game = () => {
           else {
             //check if current pawn is moving for the first time and moving 2 squares forward
             let firstMove: boolean;
-            if (squares[gameState.sourceSelection].name === "Pawn") {
-              if (
-                squares[gameState.sourceSelection].player === 1 &&
-                i === gameState.sourceSelection - 16
-              ) {
-                firstMove = true;
-              } else if (
-                squares[gameState.sourceSelection].player === 2 &&
-                i === gameState.sourceSelection + 16
-              ) {
-                firstMove = true;
-              }
+            if (
+              (squares[gameState.sourceSelection].player === 1) && (i === gameState.sourceSelection - 16)
+            ) {
+              firstMove = true;
+            } 
+            else if (
+              (squares[gameState.sourceSelection].player === 2) && (i === gameState.sourceSelection + 16)
+            ) {
+              firstMove = true;
             }
 
-            //record current pawn position for next turn to check en passant rule
-            let lastTurnPawnPosition = i;
             //update number of pieces
             if (squares[i] !== null) {
               if (gameState.turn === "white") {
                 blackRemainingPieces -= 1;
-              } else {
+              } 
+              else {
                 whiteRemainingPieces -= 1;
               }
             }
@@ -289,6 +262,7 @@ const Game = () => {
             //to convert pawn that reach other side of the chess board
             if ([0, 1, 2, 3, 4, 5, 6, 7, 56, 57, 58, 59, 60, 61, 62, 63].includes(i)) {
               const tempSquares = squares.concat();
+              
               //give player choice to convert their pawn and highlight those choices
               if (gameState.turn === "white") {
                 tempSquares[10] = new Knight(1);
@@ -336,20 +310,24 @@ const Game = () => {
               }
               
               //update chess board with convert choices and save chess board without choices in this.state.tempSquares
-              dispatchGameAction(["updateBoard", { squares, tempSquares, i }]);
+              dispatchGameAction([
+                "updateBoard", 
+                { squares, tempSquares, i, selectedPawnPosition: gameState.sourceSelection }
+              ]);
             } 
             else {
               dispatchGameAction([
-                "moves", { squares, firstMove, lastTurnPawnPosition, disabled: !gameState.offlineMode }
+                "moves", { squares, firstMove, lastTurnPawnPosition: i, disabled: !gameState.offlineMode }
               ]);
+
+              if (!gameState.offlineMode) {
+                emitGameEvent(
+                  "moves", 
+                  { selectedPiece: gameState.sourceSelection, targetPosition: i }
+                );
+              }
             }
 
-            if (!gameState.offlineMode) {
-              emitGameEvent(
-                "moves", 
-                { selectedPiece: gameState.sourceSelection, targetPosition: i }
-              );
-            }
           }
         } 
         else {
@@ -444,60 +422,97 @@ const Game = () => {
         }
       }
 
-      if (check) {
-        //for game result
-        //to record next player's possible moves
-        let temp: number[] = [];
-        const turn = gameState.turn === "white" ? "black" : "white";
-        const player = gameState.turn === "white" ? 2 : 1;
+      //for game result
+      //to record next player's possible moves
+      let temp: number[] = [];
+      const turn = gameState.turn === "white" ? "black" : "white";
+      const player = gameState.turn === "white" ? 2 : 1;
+      for (let i = 0; i < squares.length; i++) {
+        if (squares[i] !== null) {
+          if (squares[i].player === player) {
+            if (squares[i].name === "Pawn") {
+              temp = temp.concat(
+                checkMovesVer2(
+                  squares,
+                  squares[i].possibleMoves(i, squares),
+                  i,
+                  turn
+                )
+              );
+            } else if (squares[i].name === "King") {
+              temp = temp.concat(
+                checkMovesVer2(
+                  squares,
+                  squares[i].possibleMoves(i, squares),
+                  i,
+                  turn
+                )
+              );
+            } else {
+              temp = temp.concat(
+                checkMovesVer2(
+                  squares,
+                  squares[i].possibleMoves(i, squares),
+                  i,
+                  turn
+                )
+              );
+            }
+          }
+        }
+      }
+      const kingPosition = turn === "white"
+        ? gameState.whiteKingPosition
+        : gameState.blackKingPosition;
+
+      //if next play doesn't have any possible moves then winner or stalemate
+      if (temp.length === 0) {
+        let result: string;
+
+        if (!squares[i].possibleMoves(i, squares).includes(kingPosition)) {
+          result = "Stalemate Draw";
+        } else {
+          result = turn === "white" ? "Black Won" : "White Won";
+        }
+
+        dispatchGameAction(["gameResult", result]);
+
+        if (!gameState.offlineMode) {
+          emitGameEvent("gameResult", { result });
+        }
+      }
+
+      //other ways to draw
+      if (blackRemainingPieces < 3 && whiteRemainingPieces < 3) {
+        const result = "Draw";
+        let temp: boolean | undefined = undefined;
+        let temp2: boolean | undefined = false;
         for (let i = 0; i < squares.length; i++) {
-          if (squares[i] !== null) {
-            if (squares[i].player === player) {
-              if (squares[i].name === "Pawn") {
-                temp = temp.concat(
-                  checkMovesVer2(
-                    squares,
-                    squares[i].possibleMoves(i, squares),
-                    i,
-                    turn
-                  )
-                );
-              } else if (squares[i].name === "King") {
-                temp = temp.concat(
-                  checkMovesVer2(
-                    squares,
-                    squares[i].possibleMoves(i, squares),
-                    i,
-                    turn
-                  )
-                );
+          if (squares[i] !== null && squares[i].name === "Bishop") {
+            if (
+              [
+                1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23, 24, 26, 28, 30,
+                33, 35, 37, 39, 40, 42, 44, 46, 49, 51, 53, 55, 56, 58, 60, 62
+              ].includes(i)
+            ) {
+              if (squares[i].player === 1) {
+                temp = true;
               } else {
-                temp = temp.concat(
-                  checkMovesVer2(
-                    squares,
-                    squares[i].possibleMoves(i, squares),
-                    i,
-                    turn
-                  )
-                );
+                temp2 = true;
+              }
+            } 
+            else {
+              if (squares[i].player === 1) {
+                temp = false;
+              } else {
+                temp2 = false;
               }
             }
           }
         }
-        const kingPosition = turn === "white"
-          ? gameState.whiteKingPosition
-          : gameState.blackKingPosition;
 
-        //if next play doesn't have any possible moves then winner or stalemate
-        if (temp.length === 0) {
-          let result: string;
-
-          if (!squares[i].possibleMoves(i, squares).includes(kingPosition)) {
-            result = "Stalemate Draw";
-          } else {
-            result = turn === "white" ? "Black Won" : "White Won";
-          }
-
+        //king and bishop versus king and bishop with the bishops on the same color
+        if (temp === temp2) {
           dispatchGameAction(["gameResult", result]);
 
           if (!gameState.offlineMode) {
@@ -505,68 +520,23 @@ const Game = () => {
           }
         }
 
-        //other ways to draw
-        if (blackRemainingPieces < 3 && whiteRemainingPieces < 3) {
-          const result = "Draw";
-          let temp: boolean | undefined = undefined;
-          let temp2: boolean | undefined = false;
+        //king and bishop versus king, king and knight versus king draw
+        if (
+          (blackRemainingPieces === 2 && whiteRemainingPieces === 1) 
+          || (blackRemainingPieces === 1 && whiteRemainingPieces === 2)
+        ) {
+          let temp: boolean = false;
           for (let i = 0; i < squares.length; i++) {
-            if (squares[i] !== null && squares[i].name === "Bishop") {
+            if (squares[i] !== null) {
               if (
-                [
-                  1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23, 24, 26, 28, 30,
-                  33, 35, 37, 39, 40, 42, 44, 46, 49, 51, 53, 55, 56, 58, 60, 62
-                ].includes(i)
+                squares[i].name === "Bishop" ||
+                squares[i].name === "Knight"
               ) {
-                if (squares[i].player === 1) {
-                  temp = true;
-                } else {
-                  temp2 = true;
-                }
-              } 
-              else {
-                if (squares[i].player === 1) {
-                  temp = false;
-                } else {
-                  temp2 = false;
-                }
+                temp = true;
               }
             }
           }
-
-          //king and bishop versus king and bishop with the bishops on the same color
-          if (temp === temp2) {
-            dispatchGameAction(["gameResult", result]);
-            emitGameEvent("gameResult", { result });
-          }
-
-          //king and bishop versus king, king and knight versus king draw
-          if (
-            (blackRemainingPieces === 2 && whiteRemainingPieces === 1) 
-            || (blackRemainingPieces === 1 && whiteRemainingPieces === 2)
-          ) {
-            let temp: boolean = false;
-            for (let i = 0; i < squares.length; i++) {
-              if (squares[i] !== null) {
-                if (
-                  squares[i].name === "Bishop" ||
-                  squares[i].name === "Knight"
-                ) {
-                  temp = true;
-                }
-              }
-            }
-            if (temp) {
-              dispatchGameAction(["gameResult", result]);
-
-              if (!gameState.offlineMode) {
-                emitGameEvent("gameResult", { result });
-              }
-            }
-          }
-
-          //king versus king draw
-          if (blackRemainingPieces === 1 && whiteRemainingPieces === 1) {
+          if (temp) {
             dispatchGameAction(["gameResult", result]);
 
             if (!gameState.offlineMode) {
@@ -574,10 +544,55 @@ const Game = () => {
             }
           }
         }
+
+        //king versus king draw
+        if (blackRemainingPieces === 1 && whiteRemainingPieces === 1) {
+          dispatchGameAction(["gameResult", result]);
+
+          if (!gameState.offlineMode) {
+            emitGameEvent("gameResult", { result });
+          }
+        }
       }
 
       dispatchGameAction(["updatePieces", { whiteRemainingPieces, blackRemainingPieces }]);
     }
+    else if (gameState.currentPlayerAction === PlayerAction.SELECT_PROMOTION_PIECE) {
+      //to convert pawn that reach other side of the chess board
+      if ([10, 11, 12, 13, 50, 51, 52, 53].includes(i)) {
+        //dehighlight
+        if (gameState.turn === "white") {
+          squares[10].style = { ...squares[10].style, backgroundColor: "" };
+          squares[11].style = { ...squares[11].style, backgroundColor: "" };
+          squares[12].style = { ...squares[12].style, backgroundColor: "" };
+          squares[13].style = { ...squares[13].style, backgroundColor: "" };
+        } else if (gameState.turn === "black") {
+          squares[50].style = { ...squares[50].style, backgroundColor: "" };
+          squares[51].style = { ...squares[51].style, backgroundColor: "" };
+          squares[52].style = { ...squares[52].style, backgroundColor: "" };
+          squares[53].style = { ...squares[53].style, backgroundColor: "" };
+        }
+
+        //convert pawn to player selected piece
+        const newSquares = gameState.tempSquares;
+        newSquares[gameState.convertPawnPosition] = squares[i];
+        dispatchGameAction(["convertPawn", { squares: newSquares, disabled: !gameState.offlineMode }]);
+
+        if (!gameState.offlineMode) {
+          emitGameEvent(
+            "moves", 
+            { 
+              selectedPiece: gameState.sourceSelection, 
+              targetPosition: gameState.convertPawnPosition,
+              promotionPiece: squares[i]
+            }
+          );
+        }
+      } 
+      else {
+        dispatchGameAction(["wrongMove", squares]);
+      }
+    } 
   }
 
   const enpassant = (selectedPawnPosition: number) => {
@@ -703,7 +718,7 @@ const Game = () => {
   };
 
   const receiveOpponentMove = (
-    selectedPiece: number, targetPosition: number, availableMoves: number[] = []
+    selectedPiece: number, targetPosition: number, promotionPiece: any = null
   ) => {
     let squares = gameState.squares;
     let whiteRemainingPieces = gameState.whiteRemainingPieces;
@@ -711,7 +726,35 @@ const Game = () => {
     const whiteFallenSoldiers = gameState.whiteFallenSoldiers;
     const blackFallenSoldiers = gameState.blackFallenSoldiers;
 
-    if (squares[selectedPiece].name === "Pawn") {
+    //to convert pawn that reach other side of the chess board
+    if (promotionPiece) {
+      if (squares[targetPosition] !== null) {
+        if (gameState.turn === "white") {
+          blackFallenSoldiers.push(squares[targetPosition]);
+          blackRemainingPieces -= 1;
+        } else {
+          whiteFallenSoldiers.push(squares[targetPosition]);
+          whiteRemainingPieces -= 1;
+        }
+      }
+
+      dispatchGameAction([
+        "movePiece",
+        { 
+          squares, 
+          whiteFallenSoldiers, 
+          blackFallenSoldiers, 
+          whiteRemainingPieces, 
+          blackRemainingPieces,
+          disabled: false,
+          piece: "promotion",
+          targetPosition,
+          selectedPiece,
+          promotionPiece
+        }
+      ]);
+    }
+    else if (squares[selectedPiece].name === "Pawn") {
       const canEnpassant = enpassant(selectedPiece);
 
       if (
@@ -749,13 +792,13 @@ const Game = () => {
       else {
         let firstMove: boolean;
         if (
-          squares[selectedPiece].player === 1 
+          squares[selectedPiece].player === Player.White
           && targetPosition === selectedPiece - 16
         ) {
           firstMove = true;
         } 
         else if (
-          squares[selectedPiece].player === 2 
+          squares[selectedPiece].player === Player.Black
           && targetPosition === selectedPiece + 16
         ) {
           firstMove = true;
@@ -773,75 +816,22 @@ const Game = () => {
           }
         }
 
-        //to convert pawn that reach other side of the chess board
-        if ([0, 1, 2, 3, 4, 5, 6, 7, 56, 57, 58, 59, 60, 61, 62, 63].includes(targetPosition)) {
-          const tempSquares = squares.concat();
-          //give player choice to convert their pawn and highlight those choices
-          if (gameState.turn === "white") {
-            tempSquares[10] = new Knight(1);
-            tempSquares[10].style = {
-              ...tempSquares[10].style,
-              backgroundColor: "RGB(111,143,114)",
-            };
-            tempSquares[11] = new Bishop(1);
-            tempSquares[11].style = {
-              ...tempSquares[11].style,
-              backgroundColor: "RGB(111,143,114)",
-            };
-            tempSquares[12] = new Rook(1);
-            tempSquares[12].style = {
-              ...tempSquares[12].style,
-              backgroundColor: "RGB(111,143,114)",
-            };
-            tempSquares[13] = new Queen(1);
-            tempSquares[13].style = {
-              ...tempSquares[13].style,
-              backgroundColor: "RGB(111,143,114)",
-            };
-          } 
-          else if (gameState.turn === "black") {
-            tempSquares[50] = new Knight(2);
-            tempSquares[50].style = {
-              ...tempSquares[50].style,
-              backgroundColor: "RGB(111,143,114)",
-            };
-            tempSquares[51] = new Bishop(2);
-            tempSquares[51].style = {
-              ...tempSquares[51].style,
-              backgroundColor: "RGB(111,143,114)",
-            };
-            tempSquares[52] = new Rook(2);
-            tempSquares[52].style = {
-              ...tempSquares[52].style,
-              backgroundColor: "RGB(111,143,114)",
-            };
-            tempSquares[53] = new Queen(2);
-            tempSquares[53].style = {
-              ...tempSquares[53].style,
-              backgroundColor: "RGB(111,143,114)",
-            };
+        dispatchGameAction([
+          "movePiece",
+          { 
+            squares, 
+            whiteFallenSoldiers, 
+            blackFallenSoldiers, 
+            whiteRemainingPieces, 
+            blackRemainingPieces,
+            disabled: false,
+            firstMove,
+            lastTurnPawnPosition,
+            piece: "pawn",
+            selectedPiece,
+            targetPosition
           }
-          
-          dispatchGameAction(["updateBoard", { squares, tempSquares, i: targetPosition }]);
-        } 
-        else {
-          dispatchGameAction([
-            "movePiece",
-            { 
-              squares, 
-              whiteFallenSoldiers, 
-              blackFallenSoldiers, 
-              whiteRemainingPieces, 
-              blackRemainingPieces,
-              disabled: false,
-              firstMove,
-              lastTurnPawnPosition,
-              piece: "pawn",
-              selectedPiece,
-              targetPosition
-            }
-          ]);
-        }
+        ]);
       }
     }
     else if (squares[selectedPiece].name === "King") {
@@ -914,7 +904,7 @@ const Game = () => {
           whiteRemainingPieces, 
           blackRemainingPieces,
           disabled: false,
-          piece: squares[selectedPiece].name === "Rook" ? "rook" : null,
+          piece: squares[selectedPiece].name === "Rook" ? "rook" : "others",
           targetPosition,
           selectedPiece
         }
@@ -952,7 +942,7 @@ const Game = () => {
       }
     }
     function updateGameData(data: any) {
-      receiveOpponentMove(data.selectedPiece, data.targetPosition);
+      receiveOpponentMove(data.selectedPiece, data.targetPosition, data.promotionPiece);
     }
     function gameover(data: any) {
       dispatchGameAction(["gameover", data.result]);
@@ -994,7 +984,7 @@ const Game = () => {
             <div className="game-board">
               <Board
                 squares={gameState.squares}
-                onClick={(i: number) => handleBoardClick(i, true)}
+                onClick={(i: number) => handleBoardClick(i,)}
                 disabled={gameState.disabled}
                 rotateBoard={gameState.rotateBoard}
               />
