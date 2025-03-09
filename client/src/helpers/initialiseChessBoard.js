@@ -5,7 +5,7 @@ import Pawn from '../pieces/pawn.js';
 import Queen from '../pieces/queen.js';
 import Rook from '../pieces/rook.js';
 
-export default function initialiseChessBoard(side) {
+export default function initialiseChessBoard() {
     const squares = Array(64).fill(null);
 
     for (let i = 8; i < 16; i++) {

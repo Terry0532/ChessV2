@@ -93,3 +93,7 @@ h3 {
 .rotate {
   transform: rotate(180deg);
 }
+
+.highlight-color {
+  background-color: rgb(111, 143, 114);
+}

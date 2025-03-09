@@ -9,8 +9,9 @@ import Bishop from "../pieces/bishop.js";
 import Rook from "../pieces/rook.js";
 import NewUser from "./NewUser";
 import ShowUsers from "./ShowUsers";
-import { gameReducer, initialGameState, Piece, Player, PlayerAction } from "./gameReducer";
+import { gameReducer, initialGameState } from "./gameReducer";
 import { socket } from '../socket.js';
+import { ChessPiece, Player, PlayerAction } from "../helpers/types";
 
 const Game = () => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
@@ -69,73 +70,13 @@ const Game = () => {
         ]);
 
         if (squares[i]) {
-          squares[i].style = { ...squares[i].style, backgroundColor: "" };
+          squares[i].setBackgroundColor("");
         }
       } 
       else {
-        //highlight selected piece
-        squares[i].style = {
-          ...squares[i].style,
-          backgroundColor: "RGB(111,143,114)",
-        };
+        squares[i].setBackgroundColor();
 
-        //check if castle is possible and add possible moves to highLightMoves array
-        if (i === 4 || i === 60) {
-          if (gameState.turn === "white" && gameState.whiteKingFirstMove) {
-            const allPossibleMovesBlack = getAllPossibleMoves(squares, Player.Black);
-            if (
-              gameState.whiteRookFirstMoveLeft &&
-              squares[57] === null &&
-              squares[58] === null &&
-              squares[59] === null &&
-              !allPossibleMovesBlack.some((element: number) =>
-                [57, 58, 59].includes(element)
-              )
-            ) {
-              highLightMoves.push(58);
-            }
-            if (
-              gameState.whiteRookFirstMoveRight &&
-              squares[61] === null &&
-              squares[62] === null &&
-              !allPossibleMovesBlack.some((element: number) =>
-                [61, 62].includes(element)
-              )
-            ) {
-              highLightMoves.push(62);
-            }
-          } 
-          else if (
-            gameState.turn === "black" &&
-            gameState.blackKingFirstMove
-          ) {
-            const allPossibleMovesWhite = getAllPossibleMoves(squares, Player.White);
-            if (
-              gameState.blackRookFirstMoveLeft &&
-              squares[1] === null &&
-              squares[2] === null &&
-              squares[3] === null &&
-              !allPossibleMovesWhite.some((element: number) =>
-                [1, 2, 3].includes(element)
-              )
-            ) {
-              highLightMoves.push(2);
-            }
-            if (
-              gameState.blackRookFirstMoveRight &&
-              squares[5] === null &&
-              squares[6] === null &&
-              !allPossibleMovesWhite.some((element: number) =>
-                [5, 6].includes(element)
-              )
-            ) {
-              highLightMoves.push(6);
-            }
-          }
-        }
-
-        //highlight possible moves
-        if (squares[i].name === Piece.Pawn) {
+        if (squares[i].name === ChessPiece.Pawn) {
           const canEnpassant = enpassant(i);
           highLightMoves = checkMovesVer2(
             squares,
@@ -144,7 +85,62 @@ const Game = () => {
             gameState.turn
           );
         } 
-        else if (squares[i].name === Piece.King) {
+        else if (squares[i].name === ChessPiece.King) {
+          //check if castle is possible and add possible moves to highLightMoves array
+          if (i === 4 || i === 60) {
+            if (gameState.turn === "white" && gameState.whiteKingFirstMove) {
+              const allPossibleMovesBlack = getAllPossibleMoves(squares, Player.Black);
+              if (
+                gameState.whiteRookFirstMoveLeft &&
+                squares[57] === null &&
+                squares[58] === null &&
+                squares[59] === null &&
+                !allPossibleMovesBlack.some((element: number) =>
+                  [57, 58, 59].includes(element)
+                )
+              ) {
+                highLightMoves.push(58);
+              }
+              if (
+                gameState.whiteRookFirstMoveRight &&
+                squares[61] === null &&
+                squares[62] === null &&
+                !allPossibleMovesBlack.some((element: number) =>
+                  [61, 62].includes(element)
+                )
+              ) {
+                highLightMoves.push(62);
+              }
+            } 
+            else if (
+              gameState.turn === "black" &&
+              gameState.blackKingFirstMove
+            ) {
+              const allPossibleMovesWhite = getAllPossibleMoves(squares, Player.White);
+              if (
+                gameState.blackRookFirstMoveLeft &&
+                squares[1] === null &&
+                squares[2] === null &&
+                squares[3] === null &&
+                !allPossibleMovesWhite.some((element: number) =>
+                  [1, 2, 3].includes(element)
+                )
+              ) {
+                highLightMoves.push(2);
+              }
+              if (
+                gameState.blackRookFirstMoveRight &&
+                squares[5] === null &&
+                squares[6] === null &&
+                !allPossibleMovesWhite.some((element: number) =>
+                  [5, 6].includes(element)
+                )
+              ) {
+                highLightMoves.push(6);
+              }
+            }
+          }
+          
           highLightMoves = highLightMoves.concat(
             squares[i].possibleMoves(i, squares)
           );
@@ -167,11 +163,9 @@ const Game = () => {
         for (let index = 0; index < highLightMoves.length; index++) {
           const element = highLightMoves[index];
           if (squares[element] !== null) {
-            squares[element].style = {
-              ...squares[element].style,
-              backgroundColor: "RGB(111,143,114)",
-            };
-          } else {
+            squares[element].setBackgroundColor();
+          } 
+          else {
             squares.splice(element, 1, {
               style: { backgroundColor: "RGB(111,143,114)" },
             });
@@ -183,15 +177,12 @@ const Game = () => {
     } 
     else if (gameState.currentPlayerAction === PlayerAction.EXECUTE_MOVE) {
       //dehighlight selected piece
-      squares[gameState.sourceSelection].style = {
-        ...squares[gameState.sourceSelection].style,
-        backgroundColor: "",
-      };
+      squares[gameState.sourceSelection].setBackgroundColor("");
 
       const whiteFallenSoldiers = gameState.whiteFallenSoldiers;
       const blackFallenSoldiers = gameState.blackFallenSoldiers;
 
-      if (squares[gameState.sourceSelection].name === Piece.Pawn) {
+      if (squares[gameState.sourceSelection].name === ChessPiece.Pawn) {
         squares = dehighlight(squares);
         const canEnpassant = enpassant(gameState.sourceSelection);
 
@@ -266,48 +257,16 @@ const Game = () => {
               
               //give player choice to convert their pawn and highlight those choices
               if (gameState.turn === "white") {
-                tempSquares[10] = new Knight(1);
-                tempSquares[10].style = {
-                  ...tempSquares[10].style,
-                  backgroundColor: "RGB(111,143,114)",
-                };
-                tempSquares[11] = new Bishop(1);
-                tempSquares[11].style = {
-                  ...tempSquares[11].style,
-                  backgroundColor: "RGB(111,143,114)",
-                };
-                tempSquares[12] = new Rook(1);
-                tempSquares[12].style = {
-                  ...tempSquares[12].style,
-                  backgroundColor: "RGB(111,143,114)",
-                };
-                tempSquares[13] = new Queen(1);
-                tempSquares[13].style = {
-                  ...tempSquares[13].style,
-                  backgroundColor: "RGB(111,143,114)",
-                };
+                tempSquares[10] = new Knight(Player.White).setBackgroundColor();
+                tempSquares[11] = new Bishop(Player.White).setBackgroundColor();
+                tempSquares[12] = new Rook(Player.White).setBackgroundColor();
+                tempSquares[13] = new Queen(Player.White).setBackgroundColor();
               } 
               else if (gameState.turn === "black") {
-                tempSquares[50] = new Knight(2);
-                tempSquares[50].style = {
-                  ...tempSquares[50].style,
-                  backgroundColor: "RGB(111,143,114)",
-                };
-                tempSquares[51] = new Bishop(2);
-                tempSquares[51].style = {
-                  ...tempSquares[51].style,
-                  backgroundColor: "RGB(111,143,114)",
-                };
-                tempSquares[52] = new Rook(2);
-                tempSquares[52].style = {
-                  ...tempSquares[52].style,
-                  backgroundColor: "RGB(111,143,114)",
-                };
-                tempSquares[53] = new Queen(2);
-                tempSquares[53].style = {
-                  ...tempSquares[53].style,
-                  backgroundColor: "RGB(111,143,114)",
-                };
+                tempSquares[50] = new Knight(Player.Black).setBackgroundColor();
+                tempSquares[51] = new Bishop(Player.Black).setBackgroundColor();
+                tempSquares[52] = new Rook(Player.Black).setBackgroundColor();
+                tempSquares[53] = new Queen(Player.Black).setBackgroundColor();
               }
               
               //update chess board with convert choices and save chess board without choices in this.state.tempSquares
@@ -335,7 +294,7 @@ const Game = () => {
           dispatchGameAction(["wrongMove", squares]);
         }
       } 
-      else if (squares[gameState.sourceSelection].name === Piece.King) {
+      else if (squares[gameState.sourceSelection].name === ChessPiece.King) {
         squares = dehighlight(squares);
         //for castling
         if (
@@ -431,7 +390,7 @@ const Game = () => {
       for (let i = 0; i < squares.length; i++) {
         if (squares[i] !== null) {
           if (squares[i].player === player) {
-            if (squares[i].name === Piece.Pawn) {
+            if (squares[i].name === ChessPiece.Pawn) {
               temp = temp.concat(
                 checkMovesVer2(
                   squares,
@@ -441,7 +400,7 @@ const Game = () => {
                 )
               );
             } 
-            else if (squares[i].name === Piece.King) {
+            else if (squares[i].name === ChessPiece.King) {
               temp = temp.concat(
                 checkMovesVer2(
                   squares,
@@ -492,7 +451,7 @@ const Game = () => {
         let temp: boolean | undefined = undefined;
         let temp2: boolean | undefined = false;
         for (let i = 0; i < squares.length; i++) {
-          if (squares[i] !== null && squares[i].name === Piece.Bishop) {
+          if (squares[i] !== null && squares[i].name === ChessPiece.Bishop) {
             if (
               [
                 1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23, 24, 26, 28, 30,
@@ -533,8 +492,8 @@ const Game = () => {
           for (let i = 0; i < squares.length; i++) {
             if (squares[i] !== null) {
               if (
-                squares[i].name === Piece.Bishop ||
-                squares[i].name === Piece.Knight
+                squares[i].name === ChessPiece.Bishop ||
+                squares[i].name === ChessPiece.Knight
               ) {
                 temp = true;
               }
@@ -564,23 +523,9 @@ const Game = () => {
     else if (gameState.currentPlayerAction === PlayerAction.SELECT_PROMOTION_PIECE) {
       //to convert pawn that reach other side of the chess board
       if ([10, 11, 12, 13, 50, 51, 52, 53].includes(i)) {
-        //dehighlight
-        if (gameState.turn === "white") {
-          squares[10].style = { ...squares[10].style, backgroundColor: "" };
-          squares[11].style = { ...squares[11].style, backgroundColor: "" };
-          squares[12].style = { ...squares[12].style, backgroundColor: "" };
-          squares[13].style = { ...squares[13].style, backgroundColor: "" };
-        } 
-        else if (gameState.turn === "black") {
-          squares[50].style = { ...squares[50].style, backgroundColor: "" };
-          squares[51].style = { ...squares[51].style, backgroundColor: "" };
-          squares[52].style = { ...squares[52].style, backgroundColor: "" };
-          squares[53].style = { ...squares[53].style, backgroundColor: "" };
-        }
-
         //convert pawn to player selected piece
         const newSquares = gameState.tempSquares;
-        newSquares[gameState.convertPawnPosition] = squares[i];
+        newSquares[gameState.convertPawnPosition] = squares[i].setBackgroundColor("");
         dispatchGameAction(["convertPawn", { squares: newSquares, disabled: !gameState.offlineMode }]);
 
         if (!gameState.offlineMode) {
@@ -618,10 +563,7 @@ const Game = () => {
       const element = gameState.highLightMoves[index];
 
       if (squares[element].name !== undefined) {
-        squares[element].style = {
-          ...squares[element].style,
-          backgroundColor: "",
-        };
+        squares[element].setBackgroundColor("");
       } 
       else {
         squares[element] = null;
@@ -747,14 +689,14 @@ const Game = () => {
           whiteRemainingPieces, 
           blackRemainingPieces,
           disabled: false,
-          piece: Piece.Promotion,
+          piece: ChessPiece.Promotion,
           targetPosition,
           selectedPiece,
           promotionPiece
         }
       ]);
     }
-    else if (squares[selectedPiece].name === Piece.Pawn) {
+    else if (squares[selectedPiece].name === ChessPiece.Pawn) {
       const canEnpassant = enpassant(selectedPiece);
 
       if (
@@ -782,7 +724,7 @@ const Game = () => {
             whiteRemainingPieces, 
             blackRemainingPieces,
             disabled: false,
-            piece: Piece.Pawn,
+            piece: ChessPiece.Pawn,
             selectedPiece,
             canEnpassant,
             targetPosition
@@ -827,14 +769,14 @@ const Game = () => {
             disabled: false,
             firstMove,
             lastTurnPawnPosition,
-            piece: Piece.Pawn,
+            piece: ChessPiece.Pawn,
             selectedPiece,
             targetPosition
           }
         ]);
       }
     }
-    else if (squares[selectedPiece].name === "King") {
+    else if (squares[selectedPiece].name === ChessPiece.King) {
       //for castling
       if (
         (targetPosition === 2 || targetPosition === 6 || targetPosition === 58 || targetPosition === 62) 
@@ -849,7 +791,7 @@ const Game = () => {
             whiteRemainingPieces, 
             blackRemainingPieces,
             disabled: false,
-            piece: Piece.King,
+            piece: ChessPiece.King,
             targetPosition,
             selectedPiece,
             castle: true
@@ -877,7 +819,7 @@ const Game = () => {
             whiteRemainingPieces, 
             blackRemainingPieces,
             disabled: false,
-            piece: Piece.King,
+            piece: ChessPiece.King,
             targetPosition,
             selectedPiece
           }
@@ -904,7 +846,7 @@ const Game = () => {
           whiteRemainingPieces, 
           blackRemainingPieces,
           disabled: false,
-          piece: squares[selectedPiece].name === Piece.Rook ? Piece.Rook : null,
+          piece: squares[selectedPiece].name === ChessPiece.Rook ? ChessPiece.Rook : null,
           targetPosition,
           selectedPiece
         }

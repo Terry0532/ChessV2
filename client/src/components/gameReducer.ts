@@ -1,16 +1,5 @@
 import initialiseChessBoard from "../helpers/initialiseChessBoard";
-
-export enum Player { White = 1, Black = 2 };
-export enum PlayerAction { SELECT_PIECE, SELECT_PROMOTION_PIECE, EXECUTE_MOVE };
-export enum Piece {
-  Pawn = "Pawn",
-  King = "King",
-  Bishop = "Bishop",
-  Knight = "Knight",
-  Queen = "Queen",
-  Rook = "Rook",
-  Promotion = "Promotion"
-};
+import { ChessPiece, Player, PlayerAction } from "../helpers/types";
 
 export interface GameState {
   squares: any[],
@@ -110,7 +99,7 @@ export type GameAction =
         castle?: boolean;
         disabled: boolean;
         firstMove?: boolean;
-        piece: Piece;
+        piece: ChessPiece;
         targetPosition: number;
         selectedPiece: number;
         lastTurnPawnPosition?: number;
@@ -121,7 +110,6 @@ export type GameAction =
         promotionPiece?: any;
       }
     ];
-
 
 export const initialGameState: GameState = {
   squares: initialiseChessBoard(),
@@ -341,7 +329,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
       return {
         ...changeTurn(gameState),
         ...(
-          newValue.squares[newValue.i].name === Piece.Rook
+          newValue.squares[newValue.i].name === ChessPiece.Rook
             ? updateRookMoveStatus(gameState, gameState.sourceSelection, isWhitePlayer) 
             : {}
         ),
@@ -404,19 +392,19 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         6:  { rookSource: 7,  rookTarget: 5  },
       };
 
-      if (newValue.piece === Piece.Pawn && newValue.canEnpassant) {
+      if (newValue.piece === ChessPiece.Pawn && newValue.canEnpassant) {
         squares[newValue.targetPosition] = squares[newValue.selectedPiece];
         squares[gameState.lastTurnPawnPosition] = null;
         squares[newValue.selectedPiece] = null;
       }
-      else if (newValue.piece === Piece.King && newValue.castle) {
+      else if (newValue.piece === ChessPiece.King && newValue.castle) {
         if (castling.hasOwnProperty(newValue.targetPosition)) {
           const castlingData = castling[newValue.targetPosition];
           squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
           squares = movePiece(castlingData.rookTarget, squares, castlingData.rookSource);
         }
       }
-      else if (newValue.piece === Piece.Promotion) {
+      else if (newValue.piece === ChessPiece.Promotion) {
         squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
         squares[newValue.targetPosition] = newValue.promotionPiece;
         squares[newValue.selectedPiece] = null;
@@ -441,12 +429,12 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         whiteRemainingPieces: newValue.whiteRemainingPieces,
         blackRemainingPieces: newValue.blackRemainingPieces,
         ...(
-          newValue.piece === Piece.Rook
+          newValue.piece === ChessPiece.Rook
             ? updateRookMoveStatus(gameState, newValue.selectedPiece, isWhitePlayer)
             : {}
         ),
         ...(
-          newValue.piece === Piece.King
+          newValue.piece === ChessPiece.King
             ? updateKingPosition(
               gameState, newValue.selectedPiece, isWhitePlayer, newValue.targetPosition
             )
