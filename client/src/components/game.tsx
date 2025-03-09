@@ -9,7 +9,7 @@ import Bishop from "../pieces/bishop.js";
 import Rook from "../pieces/rook.js";
 import NewUser from "./NewUser";
 import ShowUsers from "./ShowUsers";
-import { gameReducer, initialGameState, Player, PlayerAction } from "./gameReducer";
+import { gameReducer, initialGameState, Piece, Player, PlayerAction } from "./gameReducer";
 import { socket } from '../socket.js';
 
 const Game = () => {
@@ -135,7 +135,7 @@ const Game = () => {
         }
 
         //highlight possible moves
-        if (squares[i].name === "Pawn") {
+        if (squares[i].name === Piece.Pawn) {
           const canEnpassant = enpassant(i);
           highLightMoves = checkMovesVer2(
             squares,
@@ -144,7 +144,7 @@ const Game = () => {
             gameState.turn
           );
         } 
-        else if (squares[i].name === "King") {
+        else if (squares[i].name === Piece.King) {
           highLightMoves = highLightMoves.concat(
             squares[i].possibleMoves(i, squares)
           );
@@ -191,7 +191,7 @@ const Game = () => {
       const whiteFallenSoldiers = gameState.whiteFallenSoldiers;
       const blackFallenSoldiers = gameState.blackFallenSoldiers;
 
-      if (squares[gameState.sourceSelection].name === "Pawn") {
+      if (squares[gameState.sourceSelection].name === Piece.Pawn) {
         squares = dehighlight(squares);
         const canEnpassant = enpassant(gameState.sourceSelection);
 
@@ -204,12 +204,13 @@ const Game = () => {
               gameState.lastTurnPawnPosition + 8 === i)
           ) {
             //add captured piece to fallen soldier list
-            if (squares[gameState.lastTurnPawnPosition].player === 1) {
+            if (squares[gameState.lastTurnPawnPosition].player === Player.White) {
               whiteFallenSoldiers.push(
                 squares[gameState.lastTurnPawnPosition]
               );
               whiteRemainingPieces -= 1;
-            } else {
+            } 
+            else {
               blackFallenSoldiers.push(
                 squares[gameState.lastTurnPawnPosition]
               );
@@ -237,12 +238,12 @@ const Game = () => {
             //check if current pawn is moving for the first time and moving 2 squares forward
             let firstMove: boolean;
             if (
-              (squares[gameState.sourceSelection].player === 1) && (i === gameState.sourceSelection - 16)
+              (squares[gameState.sourceSelection].player === Player.White) && (i === gameState.sourceSelection - 16)
             ) {
               firstMove = true;
             } 
             else if (
-              (squares[gameState.sourceSelection].player === 2) && (i === gameState.sourceSelection + 16)
+              (squares[gameState.sourceSelection].player === Player.Black) && (i === gameState.sourceSelection + 16)
             ) {
               firstMove = true;
             }
@@ -334,7 +335,7 @@ const Game = () => {
           dispatchGameAction(["wrongMove", squares]);
         }
       } 
-      else if (squares[gameState.sourceSelection].name === "King") {
+      else if (squares[gameState.sourceSelection].name === Piece.King) {
         squares = dehighlight(squares);
         //for castling
         if (
@@ -430,7 +431,7 @@ const Game = () => {
       for (let i = 0; i < squares.length; i++) {
         if (squares[i] !== null) {
           if (squares[i].player === player) {
-            if (squares[i].name === "Pawn") {
+            if (squares[i].name === Piece.Pawn) {
               temp = temp.concat(
                 checkMovesVer2(
                   squares,
@@ -439,7 +440,8 @@ const Game = () => {
                   turn
                 )
               );
-            } else if (squares[i].name === "King") {
+            } 
+            else if (squares[i].name === Piece.King) {
               temp = temp.concat(
                 checkMovesVer2(
                   squares,
@@ -448,7 +450,8 @@ const Game = () => {
                   turn
                 )
               );
-            } else {
+            } 
+            else {
               temp = temp.concat(
                 checkMovesVer2(
                   squares,
@@ -471,7 +474,8 @@ const Game = () => {
 
         if (!squares[i].possibleMoves(i, squares).includes(kingPosition)) {
           result = "Stalemate Draw";
-        } else {
+        } 
+        else {
           result = turn === "white" ? "Black Won" : "White Won";
         }
 
@@ -488,7 +492,7 @@ const Game = () => {
         let temp: boolean | undefined = undefined;
         let temp2: boolean | undefined = false;
         for (let i = 0; i < squares.length; i++) {
-          if (squares[i] !== null && squares[i].name === "Bishop") {
+          if (squares[i] !== null && squares[i].name === Piece.Bishop) {
             if (
               [
                 1, 3, 5, 7, 8, 10, 12, 14, 17, 19, 21, 23, 24, 26, 28, 30,
@@ -529,8 +533,8 @@ const Game = () => {
           for (let i = 0; i < squares.length; i++) {
             if (squares[i] !== null) {
               if (
-                squares[i].name === "Bishop" ||
-                squares[i].name === "Knight"
+                squares[i].name === Piece.Bishop ||
+                squares[i].name === Piece.Knight
               ) {
                 temp = true;
               }
@@ -566,7 +570,8 @@ const Game = () => {
           squares[11].style = { ...squares[11].style, backgroundColor: "" };
           squares[12].style = { ...squares[12].style, backgroundColor: "" };
           squares[13].style = { ...squares[13].style, backgroundColor: "" };
-        } else if (gameState.turn === "black") {
+        } 
+        else if (gameState.turn === "black") {
           squares[50].style = { ...squares[50].style, backgroundColor: "" };
           squares[51].style = { ...squares[51].style, backgroundColor: "" };
           squares[52].style = { ...squares[52].style, backgroundColor: "" };
@@ -611,19 +616,14 @@ const Game = () => {
   const dehighlight = (squares: any[]) => {
     for (let index = 0; index < gameState.highLightMoves.length; index++) {
       const element = gameState.highLightMoves[index];
-      if (
-        squares[element].name === "Pawn" ||
-        squares[element].name === "Knight" ||
-        squares[element].name === "Rook" ||
-        squares[element].name === "Bishop" ||
-        squares[element].name === "Queen" ||
-        squares[element].name === "King"
-      ) {
+
+      if (squares[element].name !== undefined) {
         squares[element].style = {
           ...squares[element].style,
           backgroundColor: "",
         };
-      } else {
+      } 
+      else {
         squares[element] = null;
       }
     }
@@ -747,14 +747,14 @@ const Game = () => {
           whiteRemainingPieces, 
           blackRemainingPieces,
           disabled: false,
-          piece: "promotion",
+          piece: Piece.Promotion,
           targetPosition,
           selectedPiece,
           promotionPiece
         }
       ]);
     }
-    else if (squares[selectedPiece].name === "Pawn") {
+    else if (squares[selectedPiece].name === Piece.Pawn) {
       const canEnpassant = enpassant(selectedPiece);
 
       if (
@@ -782,7 +782,7 @@ const Game = () => {
             whiteRemainingPieces, 
             blackRemainingPieces,
             disabled: false,
-            piece: "pawn",
+            piece: Piece.Pawn,
             selectedPiece,
             canEnpassant,
             targetPosition
@@ -827,7 +827,7 @@ const Game = () => {
             disabled: false,
             firstMove,
             lastTurnPawnPosition,
-            piece: "pawn",
+            piece: Piece.Pawn,
             selectedPiece,
             targetPosition
           }
@@ -849,7 +849,7 @@ const Game = () => {
             whiteRemainingPieces, 
             blackRemainingPieces,
             disabled: false,
-            piece: "king",
+            piece: Piece.King,
             targetPosition,
             selectedPiece,
             castle: true
@@ -877,7 +877,7 @@ const Game = () => {
             whiteRemainingPieces, 
             blackRemainingPieces,
             disabled: false,
-            piece: "king",
+            piece: Piece.King,
             targetPosition,
             selectedPiece
           }
@@ -904,7 +904,7 @@ const Game = () => {
           whiteRemainingPieces, 
           blackRemainingPieces,
           disabled: false,
-          piece: squares[selectedPiece].name === "Rook" ? "rook" : "others",
+          piece: squares[selectedPiece].name === Piece.Rook ? Piece.Rook : null,
           targetPosition,
           selectedPiece
         }

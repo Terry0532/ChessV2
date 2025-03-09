@@ -2,6 +2,15 @@ import initialiseChessBoard from "../helpers/initialiseChessBoard";
 
 export enum Player { White = 1, Black = 2 };
 export enum PlayerAction { SELECT_PIECE, SELECT_PROMOTION_PIECE, EXECUTE_MOVE };
+export enum Piece {
+  Pawn = "Pawn",
+  King = "King",
+  Bishop = "Bishop",
+  Knight = "Knight",
+  Queen = "Queen",
+  Rook = "Rook",
+  Promotion = "Promotion"
+};
 
 export interface GameState {
   squares: any[],
@@ -101,7 +110,7 @@ export type GameAction =
         castle?: boolean;
         disabled: boolean;
         firstMove?: boolean;
-        piece: string;
+        piece: Piece;
         targetPosition: number;
         selectedPiece: number;
         lastTurnPawnPosition?: number;
@@ -160,14 +169,7 @@ export const initialGameState: GameState = {
 };
 
 export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
-  let blackKingPosition: number;
-  let whiteKingPosition: number;
-  let whiteKingFirstMove: boolean;
-  let blackKingFirstMove: boolean;
-  let whiteRookFirstMoveLeft: boolean;
-  let whiteRookFirstMoveRight: boolean;
-  let blackRookFirstMoveLeft: boolean;
-  let blackRookFirstMoveRight: boolean;
+  let isWhitePlayer: boolean;
 
   const [type, newValue] = gameAction;
   console.log(type)
@@ -262,7 +264,6 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         ...changeTurn(gameState), 
         status: "", 
         convertPawnPosition: undefined, 
-        // sourceSelection: -1, 
         currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue.squares,
         disabled: newValue.disabled
@@ -272,7 +273,6 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
       return {
         ...gameState,
         status: "Wrong selection. Choose valid source and destination again.",
-        // sourceSelection: -1,
         currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue,
         highLightMoves: []
@@ -283,7 +283,6 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         ...changeTurn(gameState),
         status: "",
         highLightMoves: [],
-        // sourceSelection: -1,
         currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue.squares,
         whiteFallenSoldiers: newValue.whiteFallenSoldiers,
@@ -296,7 +295,6 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         ...changeTurn(gameState),
         status: "",
         highLightMoves: [],
-        // sourceSelection: -1,
         currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue.squares,
         firstMove: newValue.firstMove,
@@ -324,90 +322,31 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
       };
 
     case "moveKing":
-      whiteKingPosition = gameState.whiteKingPosition;
-      blackKingPosition = gameState.blackKingPosition;
-
-      if (gameState.turn === "white") {
-        whiteKingPosition = newValue.i;
-      }
-      else if (gameState.turn === "black") {
-        blackKingPosition = newValue.i;
-      }
-
-      whiteKingFirstMove = gameState.whiteKingFirstMove;
-      blackKingFirstMove = gameState.blackKingFirstMove;
-
-      if (
-        newValue.squares[newValue.i].name === "King" &&
-        gameState.sourceSelection === 60 &&
-        newValue.squares[newValue.i].player === 1
-      ) {
-        whiteKingFirstMove = false;
-      }
-      else if (
-        newValue.squares[newValue.i].name === "King" &&
-        gameState.sourceSelection === 4 &&
-        newValue.squares[newValue.i].player === 2
-      ) {
-        blackKingFirstMove = false;
-      }
+      isWhitePlayer = newValue.squares[newValue.i].player === Player.White;
 
       return {
         ...changeTurn(gameState),
-        whiteKingPosition,
-        blackKingPosition,
         squares: newValue.squares,
         sourceSelection: -1,
         currentPlayerAction: PlayerAction.SELECT_PIECE,
         status: "",
-        whiteKingFirstMove,
-        blackKingFirstMove,
         highLightMoves: [],
-        disabled: newValue.disabled
+        disabled: newValue.disabled,
+        ...updateKingPosition(gameState, gameState.sourceSelection, isWhitePlayer, newValue.i)
       };
 
     case "moveRook":
-      //to record if rook has been moved or not. for castle.
-      whiteRookFirstMoveLeft = gameState.whiteRookFirstMoveLeft;
-      whiteRookFirstMoveRight = gameState.whiteRookFirstMoveRight;
-      blackRookFirstMoveLeft = gameState.blackRookFirstMoveLeft;
-      blackRookFirstMoveRight = gameState.blackRookFirstMoveRight;
-      if (
-        newValue.squares[newValue.i].name === "Rook" &&
-        gameState.sourceSelection === 56 &&
-        newValue.squares[newValue.i].player === 1
-      ) {
-        whiteRookFirstMoveLeft = false;
-      }
-      if (
-        newValue.squares[newValue.i].name === "Rook" &&
-        gameState.sourceSelection === 63 &&
-        newValue.squares[newValue.i].player === 1
-      ) {
-        whiteRookFirstMoveRight = false;
-      }
-      if (
-        newValue.squares[newValue.i].name === "Rook" &&
-        gameState.sourceSelection === 0 &&
-        newValue.squares[newValue.i].player === 2
-      ) {
-        blackRookFirstMoveLeft = false;
-      }
-      if (
-        newValue.squares[newValue.i].name === "Rook" &&
-        gameState.sourceSelection === 7 &&
-        newValue.squares[newValue.i].player === 2
-      ) {
-        blackRookFirstMoveRight = false;
-      }
+      isWhitePlayer = newValue.squares[newValue.i].player === Player.White;
+
       return {
         ...changeTurn(gameState),
-        whiteRookFirstMoveLeft,
-        whiteRookFirstMoveRight,
-        blackRookFirstMoveLeft,
-        blackRookFirstMoveRight,
+        ...(
+          newValue.squares[newValue.i].name === Piece.Rook
+            ? updateRookMoveStatus(gameState, gameState.sourceSelection, isWhitePlayer) 
+            : {}
+        ),
         sourceSelection: -1,
-        currentPlayerAction: PlayerAction.SELECT_PROMOTION_PIECE,
+        currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue.squares,
         status: "",
         highLightMoves: [],
@@ -438,51 +377,46 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
       return { ...gameState, hideDrawButton: "none" };
 
     case "gameStartConfirmation":
+      let disabled = gameState.disabled;
+      let rotateBoard = gameState.rotateBoard;
+
       if (newValue.game_data.whose_turn !== gameState.userId) {
-        gameState = { ...gameState, disabled: true, rotateBoard: "rotate" };
+        disabled = true;
+        rotateBoard = "rotate";
       }
+
       return {
         ...gameState,
         startGame: newValue.status,
         gameId: newValue.game_id,
         gameData: newValue.game_data,
+        disabled,
+        rotateBoard
       };
 
     case "movePiece":
       let squares = newValue.squares;
-      whiteKingPosition = gameState.whiteKingPosition;
-      blackKingPosition = gameState.blackKingPosition;
-      whiteKingFirstMove = gameState.whiteKingFirstMove;
-      blackKingFirstMove = gameState.blackKingFirstMove;
-      whiteRookFirstMoveLeft = gameState.whiteRookFirstMoveLeft;
-      whiteRookFirstMoveRight = gameState.whiteRookFirstMoveRight;
-      blackRookFirstMoveLeft = gameState.blackRookFirstMoveLeft;
-      blackRookFirstMoveRight = gameState.blackRookFirstMoveRight;
 
-      if (newValue.piece === "pawn" && newValue.canEnpassant) {
+      const castling = {
+        58: { rookSource: 56, rookTarget: 59 },
+        62: { rookSource: 63, rookTarget: 61 },
+        2:  { rookSource: 0,  rookTarget: 3  },
+        6:  { rookSource: 7,  rookTarget: 5  },
+      };
+
+      if (newValue.piece === Piece.Pawn && newValue.canEnpassant) {
         squares[newValue.targetPosition] = squares[newValue.selectedPiece];
         squares[gameState.lastTurnPawnPosition] = null;
         squares[newValue.selectedPiece] = null;
       }
-      else if (newValue.piece === "king" && newValue.castle) {
-        if (newValue.targetPosition === 58) {
+      else if (newValue.piece === Piece.King && newValue.castle) {
+        if (castling.hasOwnProperty(newValue.targetPosition)) {
+          const castlingData = castling[newValue.targetPosition];
           squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
-          squares = movePiece(59, squares, 56);
-        }
-        else if (newValue.targetPosition === 62) {
-          squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
-          squares = movePiece(61, squares, 63);
-        }
-        else if (newValue.targetPosition === 2) {
-          squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
-          squares = movePiece(3, squares, 0);
-        }
-        else if (newValue.targetPosition === 6) {
-          squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
-          squares = movePiece(5, squares, 7);
+          squares = movePiece(castlingData.rookTarget, squares, castlingData.rookSource);
         }
       }
-      else if (newValue.piece === "promotion") {
+      else if (newValue.piece === Piece.Promotion) {
         squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
         squares[newValue.targetPosition] = newValue.promotionPiece;
         squares[newValue.selectedPiece] = null;
@@ -491,61 +425,14 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
       }
 
-      if (newValue.piece === "king") {
-        if (gameState.turn === "white") {
-          whiteKingPosition = newValue.targetPosition;
-        }
-        else {
-          blackKingPosition = newValue.targetPosition;
-        }
-
-        if (
-          newValue.selectedPiece === 60 &&
-          newValue.squares[newValue.targetPosition].player === Player.White
-        ) {
-          whiteKingFirstMove = false;
-        }
-        else if (
-          newValue.selectedPiece === 4 &&
-          newValue.squares[newValue.targetPosition].player === Player.Black
-        ) {
-          blackKingFirstMove = false;
-        }
-      }
-      else if (newValue.piece === "rook") {
-        if (
-          newValue.selectedPiece === 56 &&
-          newValue.squares[newValue.targetPosition].player === Player.White
-        ) {
-          whiteRookFirstMoveLeft = false;
-        }
-        if (
-          newValue.selectedPiece === 63 &&
-          newValue.squares[newValue.targetPosition].player === Player.White
-        ) {
-          whiteRookFirstMoveRight = false;
-        }
-        if (
-          newValue.selectedPiece === 0 &&
-          newValue.squares[newValue.targetPosition].player === Player.Black
-        ) {
-          blackRookFirstMoveLeft = false;
-        }
-        if (
-          newValue.selectedPiece === 7 &&
-          newValue.squares[newValue.targetPosition].player === Player.Black
-        ) {
-          blackRookFirstMoveRight = false;
-        }
-      }
+      isWhitePlayer = squares[newValue.targetPosition].player === Player.White;
 
       return {
         ...changeTurn(gameState),
         status: "",
         highLightMoves: [],
-        // sourceSelection: -1,
         currentPlayerAction: PlayerAction.SELECT_PIECE,
-        squares: newValue.squares,
+        squares,
         whiteFallenSoldiers: newValue.whiteFallenSoldiers,
         blackFallenSoldiers: newValue.blackFallenSoldiers,
         disabled: newValue.disabled,
@@ -553,14 +440,18 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         lastTurnPawnPosition: newValue.lastTurnPawnPosition,
         whiteRemainingPieces: newValue.whiteRemainingPieces,
         blackRemainingPieces: newValue.blackRemainingPieces,
-        whiteKingPosition,
-        blackKingPosition,
-        whiteKingFirstMove,
-        blackKingFirstMove,
-        whiteRookFirstMoveLeft,
-        whiteRookFirstMoveRight,
-        blackRookFirstMoveLeft,
-        blackRookFirstMoveRight,
+        ...(
+          newValue.piece === Piece.Rook
+            ? updateRookMoveStatus(gameState, newValue.selectedPiece, isWhitePlayer)
+            : {}
+        ),
+        ...(
+          newValue.piece === Piece.King
+            ? updateKingPosition(
+              gameState, newValue.selectedPiece, isWhitePlayer, newValue.targetPosition
+            )
+            : {}
+        )
       };
 
     case "toLobby":
@@ -623,3 +514,38 @@ const movePiece = (i: number, squares: any[], sourceSelection: number) => {
   squares[sourceSelection] = null;
   return squares;
 }
+
+//to record if rook has been moved or not. for castle.
+const updateRookMoveStatus = (gameState: GameState, selectedPiece: number, isWhitePlayer: boolean) => {
+  return {
+    whiteRookFirstMoveLeft: selectedPiece === 56 && isWhitePlayer
+      ? false
+      : gameState.whiteRookFirstMoveLeft,
+    whiteRookFirstMoveRight: selectedPiece === 63 && isWhitePlayer
+      ? false
+      : gameState.whiteRookFirstMoveRight,
+    blackRookFirstMoveLeft: selectedPiece === 0 && !isWhitePlayer
+      ? false
+      : gameState.blackRookFirstMoveLeft,
+    blackRookFirstMoveRight: selectedPiece === 7 && !isWhitePlayer
+      ? false
+      : gameState.blackRookFirstMoveRight,
+  };
+};
+
+const updateKingPosition = (
+  gameState: GameState, selectedPosition: number, isWhitePlayer: boolean, targetPosition: number
+) => {
+  return {
+    whiteKingPosition: isWhitePlayer
+      ? targetPosition
+      : gameState.whiteKingPosition,
+    blackKingPosition: !isWhitePlayer
+      ? targetPosition
+      : gameState.blackKingPosition,
+    whiteKingFirstMove: selectedPosition === 60 && isWhitePlayer
+      ? false : gameState.whiteKingFirstMove,
+    blackKingFirstMove: selectedPosition === 4 && !isWhitePlayer
+      ? false : gameState.blackKingFirstMove,
+  };
+};
