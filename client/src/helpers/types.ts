@@ -50,11 +50,14 @@ export interface GameState {
   hideResignButton: string,
   hideDrawButton: string,
   offlineMode: boolean,
-  currentPlayerAction: PlayerAction
+  currentPlayerAction: PlayerAction,
+  notation: string,
+  promotionOldBoard: any[]
 };
 
 export type GameAction =
   | ["connected", string]
+  | ["updateNotation", string]
   | ["updateGameData", boolean]
   | ["opponentLeft"]
   | ["gameover", string]
@@ -91,7 +94,7 @@ export type GameAction =
   | [
     "updateBoard",
     {
-      squares: any[]; tempSquares: any[]; i: number; selectedPawnPosition: number;
+      squares: any[]; tempSquares: any[]; i: number; selectedPawnPosition: number; board: any[]
     }
   ]
   | ["moveKing", { squares: any[]; i: number; disabled: boolean; }]

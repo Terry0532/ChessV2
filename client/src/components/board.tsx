@@ -12,7 +12,6 @@ const Board: React.FC<BoardProps> = ({ squares, onClick, disabled, rotateBoard }
   const isEven = (num: number) => {
     return num % 2 === 0;
   };
-  console.log(disabled)
 
   const renderSquare = (i: number, squareShade: string) => {
     return (

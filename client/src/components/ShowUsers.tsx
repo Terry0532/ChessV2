@@ -1,6 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { ListGroup } from 'react-bootstrap';
-import { GameState } from './gameReducer';
+import { GameState } from '../helpers/types';
 
 type ShowUsersProps = {
   socket: any;

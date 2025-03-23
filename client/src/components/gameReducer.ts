@@ -43,20 +43,22 @@ export const initialGameState: GameState = {
   continueGame: false,
   hideResignButton: "",
   hideDrawButton: "",
-  offlineMode: false
+  offlineMode: false,
+  notation: "",
+  promotionOldBoard: []
 };
 
 export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
   let isWhitePlayer: boolean;
 
   const [type, newValue] = gameAction;
-  console.log(type)
-  console.log(newValue)
-  console.log(gameState)
 
   switch (type) {
     case "connected":
       return { ...gameState, userId: newValue };
+
+    case "updateNotation":
+      return { ...gameState, notation: newValue };
 
     case "updateGameData":
       return { ...gameState, disabled: newValue };
@@ -118,7 +120,9 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         leaveButton: "Leave Game",
         continueGame: false,
         hideResignButton: "",
-        hideDrawButton: ""
+        hideDrawButton: "",
+        notation: "",
+        promotionOldBoard: []
       };
 
     case "newGame":
@@ -197,6 +201,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         tempSquares: newValue.squares,
         squares: newValue.tempSquares,
         convertPawnPosition: newValue.i,
+        promotionOldBoard: newValue.board
       };
 
     case "moveKing":
@@ -368,7 +373,9 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         leaveButton: "Leave Game",
         continueGame: false,
         hideResignButton: "",
-        hideDrawButton: ""
+        hideDrawButton: "",
+        notation: "",
+        promotionOldBoard: []
       };
 
     case "startOfflineGame":
