@@ -9,10 +9,11 @@ type FallenSoldierBlockProps = {
 const FallenSoldierBlock: React.FC<FallenSoldierBlockProps> = ({ 
   whiteFallenSoldiers, blackFallenSoldiers 
 }) => {
-  const renderSquare = ({ style: { backgroundImage } }, index) => (
+  const renderSquare = ({ style: { backgroundImage } }, index: number) => (
     <button
       key={index}
       className="square"
+      data-testid={"fallen-soldier-square-" + index}
       style={{ backgroundImage, borderColor: "transparent" }}
     />
   );
