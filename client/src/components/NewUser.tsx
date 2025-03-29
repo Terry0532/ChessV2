@@ -37,7 +37,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
   useEffect(() => {
     function checkUserDetailResponse (data: boolean) {
       registrationConfirmation(data);
-      setNameTaken(!data ? true : false);
+      setNameTaken(!data);
     };
 
     socket.on("checkUserDetailResponse", checkUserDetailResponse);
@@ -57,21 +57,32 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
             variant="primary" 
             type="button"
             style={{ marginRight: 5 }}
+            data-testid="online-mode-button"
           >
             Online Mode
           </Button>
-          <Button onClick={() => selectGameMode(GameMode.Offline)} variant="primary" type="button">
+          <Button 
+            onClick={() => selectGameMode(GameMode.Offline)} 
+            variant="primary" 
+            type="button"
+            data-testid="offline-mode-button"
+          >
             Offline Mode
           </Button>
         </div>
       )}
       {gameMode === GameMode.Online && (
-        <Form onSubmit={submitName}>
+        <Form onSubmit={submitName} data-testid="enter-username-form">
           <Form.Group >
             <Form.Label>Enter Your Name</Form.Label>
-            <Form.Control type="text" onChange={onNameChange} placeholder="Name" />
+            <Form.Control type="text" onChange={onNameChange} placeholder="Name" data-testid="username-input" />
             <Form.Text className="text-muted"></Form.Text>
-            <Button onClick={submitName} variant="primary" type="button">
+            <Button 
+              onClick={submitName} 
+              variant="primary" 
+              type="button"
+              data-testid="submit-username-button"
+            >
               Submit
             </Button>
             {nameTaken ? <p>This username is taken, choose a different username.</p> : <p></p>}
