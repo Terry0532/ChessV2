@@ -78,6 +78,7 @@ const ShowUsers: React.FC<ShowUsersProps> = ({ socket, gameStartConfirmation, ga
     return () => {
       socket.off('getOpponentsResponse', getOpponentsResponse);
       socket.off('newOpponentAdded', newOpponentAdded);
+      socket.off('opponentDisconnected', opponentDisconnected);
       socket.off('excludePlayers', excludePlayers);
       socket.off('alreadyInGame', excludePlayers);
       socket.off('gameStarted', gameStarted);
@@ -96,7 +97,13 @@ const ShowUsers: React.FC<ShowUsersProps> = ({ socket, gameStartConfirmation, ga
       <ListGroup>
         {opponents.map(function (opponent, index) {
           return (
-            <ListGroup.Item onClick={() => selectOpponent(index)} action={true} className="opponent-item" key={index}>
+            <ListGroup.Item 
+              onClick={() => selectOpponent(index)} 
+              action={true} 
+              className="opponent-item" 
+              key={index}
+              data-testid={"opponent-" + index}
+            >
               {opponent.name} | Played : {opponent.played}  | Won : {opponent.won}  | Draw : {opponent.draw}
             </ListGroup.Item>
           );
