@@ -43,7 +43,7 @@ module.exports = (io) => {
     });
 
     //respond with current online users
-    client.on('getOpponents', data => {
+    client.on('getOpponents', () => {
       var response = [];
       for (var id in sockets) {
         if (id !== client.id && !sockets[id].is_playing) {
@@ -85,7 +85,7 @@ module.exports = (io) => {
       });
     });
 
-    client.on('selectOpponent', data => {
+    client.on('selectOpponent', (data) => {
       if (sockets[data.id] && !sockets[data.id].is_playing && !sockets[client.id].is_playing) {
         var gameId = uuidv4();
         sockets[data.id].is_playing = true;
