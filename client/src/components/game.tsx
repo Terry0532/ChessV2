@@ -3,14 +3,14 @@ import React, { useEffect, useReducer } from "react";
 import "../index.css";
 import Board from "./board";
 import FallenSoldierBlock from "./fallensoldiers";
-import Queen from "../pieces/queen.js";
-import Knight from "../pieces/knight.js";
-import Bishop from "../pieces/bishop.js";
-import Rook from "../pieces/rook.js";
+import Queen from "../pieces/queen";
+import Knight from "../pieces/knight";
+import Bishop from "../pieces/bishop";
+import Rook from "../pieces/rook";
 import NewUser from "./NewUser";
 import ShowUsers from "./ShowUsers";
 import { gameReducer, initialGameState } from "./gameReducer";
-import { socket } from '../socket.js';
+import { socket } from '../socket';
 import { ChessPiece, Player, PlayerAction } from "../helpers/types";
 import { convertMoveToNotation } from "../helpers/convertMoveToNotation";
 
@@ -61,7 +61,6 @@ const Game = () => {
     let squares = gameState.squares.concat();
     let whiteRemainingPieces = gameState.whiteRemainingPieces;
     let blackRemainingPieces = gameState.blackRemainingPieces;
-    //@ts-ignore
     let board = structuredClone(gameState.squares);
     let canEnpassant = false;
     const newSquares = gameState.tempSquares.concat();
@@ -933,7 +932,7 @@ const Game = () => {
       {gameState.startGame ? (
         <div>
           <div className="game">
-            <div className="game-board">
+            <div className="game-board" data-testid="game-board">
               <Board
                 squares={gameState.squares}
                 onClick={(i: number) => handleBoardClick(i,)}
@@ -946,9 +945,15 @@ const Game = () => {
               <div
                 id="player-turn-box"
                 style={{ backgroundColor: gameState.turn }}
+                data-testid="player-turn-box"
               ></div>
-              <p>{gameState.notation}</p>
-              <div className="game-status">{gameState.status}</div>
+              <p data-testid="algebraic-notation">{gameState.notation}</p>
+              <div 
+                className="game-status" 
+                data-testid="game-status"
+              >
+                {gameState.status}
+              </div>
               <div className="fallen-soldier-block">
                 {
                   <FallenSoldierBlock
@@ -960,10 +965,11 @@ const Game = () => {
               <button
                 onClick={newGame}
                 style={{ display: gameState.hideButton }}
+                data-testid="new-game-button"
               >
                 {gameState.newGameButton}
               </button>
-              <button onClick={leaveGame}>
+              <button onClick={leaveGame} data-testid="leave-game-button">
                 {gameState.leaveButton}
               </button>
               {!gameState.offlineMode && (

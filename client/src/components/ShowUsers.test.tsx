@@ -1,5 +1,5 @@
-import React from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import React, { act } from 'react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { SocketServerMock } from 'socket.io-mock-ts';
 import ShowUsers from './ShowUsers';

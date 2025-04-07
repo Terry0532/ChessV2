@@ -1,9 +1,19 @@
-import { ChessPiece } from '../helpers/types';
-import Piece from './piece.js';
+import { ChessPiece, Player } from '../helpers/types';
+import Piece from './piece';
 
 export default class Pawn extends Piece {
-	constructor(player) {
-		super(player, (player === 1 ? "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg" : "https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg"));
+	initialPositions: { 1: number[]; 2: number[]; };
+	name: ChessPiece;
+
+	constructor(player: Player) {
+		super(
+			player, 
+			(
+				player === Player.White
+					? "https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg" 
+					: "https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg"
+			)
+		);
 		this.initialPositions = {
 			1: [48, 49, 50, 51, 52, 53, 54, 55],
 			2: [8, 9, 10, 11, 12, 13, 14, 15]
@@ -11,8 +21,8 @@ export default class Pawn extends Piece {
 		this.name = ChessPiece.Pawn;
 	}
 
-	possibleMoves(src, squares, enpassant, lastTurnPawnPosition) {
-		const highLightMoves = [];
+	possibleMoves(src: number, squares, enpassant: boolean, lastTurnPawnPosition: number): number[] {
+		const highLightMoves: number[] = [];
 		if (this.player === 1 && ((src - 7) > 0 || (src - 9) > 0)) {
 			if (squares[src - 8] === null && squares[src - 16] === null && this.initialPositions[this.player].indexOf(src) !== -1) {
 				highLightMoves.push((src - 8));
@@ -55,8 +65,8 @@ export default class Pawn extends Piece {
 		return highLightMoves;
 	}
 
-	possibleCaptureMoves(src, squares) {
-		const moves = [];
+	possibleCaptureMoves(src: number, squares): number[] {
+		const moves: number[] = [];
 		if (this.player === 1 && (src - 7) > -1 && (src - 9) > -1) {
 			if (src % 8 !== 0 && (src + 1) % 8 !== 0 && squares[src - 9] === null) {
 				moves.push((src - 9));

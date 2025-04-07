@@ -1,14 +1,23 @@
-import { ChessPiece } from '../helpers/types';
-import Piece from './piece.js';
+import { ChessPiece, Player } from '../helpers/types';
+import Piece from './piece';
 
 export default class Knight extends Piece {
-  constructor(player) {
-    super(player, (player === 1 ? "https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" : "https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg"));
+  name: ChessPiece;
+
+  constructor(player: Player) {
+    super(
+      player, 
+      (
+        player === Player.White
+          ? "https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg" 
+          : "https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg"
+      )
+    );
     this.name = ChessPiece.Knight;
   }
 
-  possibleMoves(src, squares) {
-    const highLightMoves = [];
+  possibleMoves(src: number, squares): number[] {
+    const highLightMoves: number[] = [];
     if (src - 17 > -1 && squares[src - 17] === null && src % 8 !== 0) {
       highLightMoves.push((src - 17));
     }

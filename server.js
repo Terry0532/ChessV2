@@ -7,7 +7,7 @@ const io = require("socket.io")(server, {
         credentials: true
     }
 });
-const PORT = process.env.PORT || 4444;
+const PORT = process.env.PORT || 4445;
 const HOST = "127.0.0.1";
 
 app.use(express.static(path.join(__dirname, "client", "build")))
