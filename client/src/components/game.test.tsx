@@ -1,5 +1,5 @@
 import React from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, act } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { SocketServerMock } from 'socket.io-mock-ts';
 import Game from './game';
@@ -13,6 +13,11 @@ import King from '../pieces/king';
 
 const socket = new SocketServerMock();
 const client = socket.clientMock;
+//@ts-ignore
+client.connect = jest.fn();
+
+let result: boolean;
+
 const pieceDefaultPositions = [
   { piece: Pawn, player: Player.White, positions: [48, 49, 50, 51, 52, 53, 54, 55] },
   { piece: Pawn, player: Player.Black, positions: [8, 9, 10, 11, 12, 13, 14, 15] },
@@ -49,6 +54,39 @@ const playGame = () => {
   clickBoard(13);
 };
 
+const playOnlineGame = () => {
+  fireEvent.input(screen.getByTestId("username-input"), { target: { value: "test2" } })
+  fireEvent.click(screen.getByTestId("submit-username-button"));
+  act(() => {
+    socket.emit(
+      "gameStarted", 
+      { 
+        status: true, 
+        game_id: "test", 
+        game_data: { 
+          player1: "test", player2: "test2", whose_turn: "test", game_status: "ongoing", game_winner: null 
+        }
+      }
+    );
+    socket.emit("updateGameData", { selectedPiece: 52, targetPosition: 36, promotionPiece: null });
+  });
+  clickBoard(1);
+  clickBoard(18);
+  act(() => {
+    socket.emit("updateGameData", { selectedPiece: 59, targetPosition: 45, promotionPiece: null });
+  });
+  clickBoard(8);
+  clickBoard(24);
+  act(() => {
+    socket.emit("updateGameData", { selectedPiece: 61, targetPosition: 34, promotionPiece: null });
+  });
+  clickBoard(24);
+  clickBoard(32);
+  act(() => {
+    socket.emit("updateGameData", { selectedPiece: 45, targetPosition: 13, promotionPiece: null });
+  });
+}
+
 const expectPieceAtPosition = (
   pieceClass: any, player: Player, positions: number[]
 ) => {
@@ -64,7 +102,15 @@ global.structuredClone = (val) => JSON.parse(JSON.stringify(val));
 
 describe("Game", () => {
   beforeEach(() => {
-    render(<Game />);
+    render(<Game socket={client} />);
+
+    socket.on('checkUserDetail', () => {
+      socket.emit('checkUserDetailResponse', true);
+    });
+
+    socket.on('newGame', (data: any) => {
+      result = data.check;
+    });
   });
 
   describe("offline mode", () => {
@@ -252,7 +298,21 @@ describe("Game", () => {
     });
     
     it("should allow user to enter a name and enter game lobby", () => {
-      
+      expect(screen.getByTestId("enter-username-form")).toBeInTheDocument();
+
+      fireEvent.input(screen.getByTestId("username-input"), { target: { value: "test" } })
+      fireEvent.click(screen.getByTestId("submit-username-button"));
+
+      expect(screen.getByTestId("game-lobby")).toBeInTheDocument();
+    });
+
+    it("should be able to receive opponent's move", () => {
+      const pawn = new Pawn(Player.White);
+      playOnlineGame();
+
+      expect(screen.getByTestId("board-square-36")).toHaveStyle(
+        `background-image: ${ pawn.style.backgroundImage }`
+      );
     });
   });
 });

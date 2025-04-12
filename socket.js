@@ -3,12 +3,12 @@ module.exports = (io) => {
   let players = {};
   let games = {};
 
-  io.on("connection", client => {
+  io.on("connection", (client) => {
     console.log("connected : " + client.id);
     client.emit("connected", { "id": client.id });
 
     //check the username is taken or not
-    client.on('checkUserDetail', data => {
+    client.on('checkUserDetail', (data) => {
       var flag = false;
       for (var id in sockets) {
         if (sockets[id].name === data.name) {
@@ -70,7 +70,7 @@ module.exports = (io) => {
       console.log("disconnect : " + client.id);
       if (typeof sockets[client.id] !== "undefined") {
         if (sockets[client.id].is_playing && games[sockets[client.id].game_id] !== undefined) {
-          io.to(sockets[client.id].game_id).emit('opponentLeft', {});
+          io.to(sockets[client.id].game_id).emit('toLobby', {});
           players[sockets[games[sockets[client.id].game_id].player1].name].played--;
           players[sockets[games[sockets[client.id].game_id].player2].name].played--;
           io.sockets.connected[client.id === games[sockets[client.id].game_id].player1 
@@ -171,7 +171,7 @@ module.exports = (io) => {
     });
 
     //check if both players want to rematch
-    client.on("newGame", data => {
+    client.on("newGame", (data) => {
       const opponentId = data.userId === games[data.gameId].player1 
         ? games[data.gameId].player2 : games[data.gameId].player1;
 

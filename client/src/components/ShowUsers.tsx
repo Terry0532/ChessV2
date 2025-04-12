@@ -93,7 +93,7 @@ const ShowUsers: React.FC<ShowUsersProps> = ({ socket, gameStartConfirmation, ga
 
   return (
     <Fragment>
-      <h2>Please select opponent from the following</h2>
+      <h2 data-testid="game-lobby">Please select opponent from the following</h2>
       <ListGroup>
         {opponents.map(function (opponent, index) {
           return (

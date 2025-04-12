@@ -10,11 +10,11 @@ import Rook from "../pieces/rook";
 import NewUser from "./NewUser";
 import ShowUsers from "./ShowUsers";
 import { gameReducer, initialGameState } from "./gameReducer";
-import { socket } from '../socket';
 import { ChessPiece, Player, PlayerAction } from "../helpers/types";
 import { convertMoveToNotation } from "../helpers/convertMoveToNotation";
+import { Socket } from "socket.io-client";
 
-const Game = () => {
+const Game = ({ socket }: { socket: Socket }) => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
 
   const emitGameEvent = (event: string, additionalData = {}) => {
@@ -864,14 +864,9 @@ const Game = () => {
   };
 
   useEffect(() => {
+    //connected to socket
     function onConnect(data: any) {
       dispatchGameAction(["connected", data.id]);
-    }
-    function updateBoard() {
-      dispatchGameAction(["updateGameData", false]);
-    }
-    function opponentLeft() {
-      dispatchGameAction(["opponentLeft"]);
     }
     function continueGame() {
       dispatchGameAction(["continueGame"]);
@@ -905,8 +900,6 @@ const Game = () => {
 
     socket.on("connected", onConnect);
     socket.on("updateGameData", updateGameData);
-    socket.on("updateBoard", updateBoard);
-    socket.on("opponentLeft", opponentLeft);
     socket.on("gameover", gameover);
     socket.on("continueGame", continueGame);
     socket.on("nextGameData", nextGameData);
@@ -916,8 +909,6 @@ const Game = () => {
     return () => {
       socket.off("connected", onConnect);
       socket.off("updateGameData", updateGameData);
-      socket.off("updateBoard", updateBoard);
-      socket.off("opponentLeft", opponentLeft);
       socket.off("gameover", gameover);
       socket.off("continueGame", continueGame);
       socket.off("nextGameData", nextGameData);
