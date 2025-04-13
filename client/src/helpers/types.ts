@@ -12,6 +12,10 @@ export enum ChessPiece {
   Promotion = "Promotion"
 };
 
+export enum Theme { Dark = "dark", Light = "light" };
+
+export enum GameMode { Online, Offline };
+
 export interface GameState {
   squares: any[],
   whiteFallenSoldiers: any[],
@@ -52,7 +56,8 @@ export interface GameState {
   offlineMode: boolean,
   currentPlayerAction: PlayerAction,
   notation: string,
-  promotionOldBoard: any[]
+  promotionOldBoard: any[],
+  theme: Theme,
 };
 
 export type GameAction =
@@ -102,6 +107,7 @@ export type GameAction =
   | ["gameResult", string]
   | ["updatePieces", { whiteRemainingPieces: number; blackRemainingPieces: number; }]
   | ["registrationConfirmation", boolean]
+  | ["changeTheme", Theme]
   | ["hideDrawButton"]
   | ["toLobby"]
   | ["gameStartConfirmation", { game_data: any; status: boolean; game_id: string; }]

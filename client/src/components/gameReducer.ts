@@ -1,5 +1,5 @@
 import initialiseChessBoard from "../helpers/initialiseChessBoard";
-import { ChessPiece, GameAction, GameState, Player, PlayerAction } from "../helpers/types";
+import { ChessPiece, GameAction, GameState, Player, PlayerAction, Theme } from "../helpers/types";
 
 export const initialGameState: GameState = {
   squares: initialiseChessBoard(),
@@ -45,7 +45,8 @@ export const initialGameState: GameState = {
   hideDrawButton: "",
   offlineMode: false,
   notation: "",
-  promotionOldBoard: []
+  promotionOldBoard: [],
+  theme: Theme.Light,
 };
 
 export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
@@ -380,6 +381,9 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
 
     case "startOfflineGame":
       return { ...gameState, startGame: true, offlineMode: true };
+
+    case "changeTheme":
+      return { ...gameState, theme: newValue };
 
     default:
       return gameState;

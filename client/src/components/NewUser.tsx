@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
+import { GameMode, Theme } from '../helpers/types';
+import { getButtonVariant } from './game';
 
 type NewUserProps = {
   socket: any;
   registrationConfirmation: (data: boolean) => void;
   startOfflineGame: () => void;
+  theme: Theme;
 };
 
-export enum GameMode { Online, Offline };
-
-const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, startOfflineGame }) => {
+const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, startOfflineGame, theme }) => {
   const [name, setName] = useState<string>("");
   const [nameTaken, setNameTaken] = useState<boolean>(false);
   const [gameMode, setGameMode] = useState<GameMode>();
@@ -54,7 +55,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
         <div>
           <Button 
             onClick={() => selectGameMode(GameMode.Online)} 
-            variant="primary" 
+            variant={getButtonVariant(theme)} 
             type="button"
             style={{ marginRight: 5 }}
             data-testid="online-mode-button"
@@ -63,7 +64,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
           </Button>
           <Button 
             onClick={() => selectGameMode(GameMode.Offline)} 
-            variant="primary" 
+            variant={getButtonVariant(theme)} 
             type="button"
             data-testid="offline-mode-button"
           >

@@ -1,14 +1,16 @@
 import React from 'react';
 import '../index.css';
+import { Theme } from '../helpers/types';
 
 type BoardProps = {
   squares: any;
   onClick: (i: number) => void;
   disabled: boolean;
   rotateBoard: string;
+  theme: Theme;
 };
 
-const Board: React.FC<BoardProps> = ({ squares, onClick, disabled, rotateBoard }) => {
+const Board: React.FC<BoardProps> = ({ squares, onClick, disabled, rotateBoard, theme }) => {
   const isEven = (num: number) => {
     return num % 2 === 0;
   };
@@ -32,7 +34,7 @@ const Board: React.FC<BoardProps> = ({ squares, onClick, disabled, rotateBoard }
     const squareRows = [];
     for (let j = 0; j < 8; j++) {
       const squareShade = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j)) 
-        ? "light-square" : "dark-square";
+        ? `light-square ${ theme }` : `dark-square ${ theme }`;
       squareRows.push(renderSquare((i * 8) + j, squareShade));
     }
     board.push(<div key={i} className="board-row" data-testid={"board-row-" + i}>{squareRows}</div>);

@@ -3,12 +3,19 @@ import { render, fireEvent, screen } from '@testing-library/react';
 import Board from './board';
 import initialiseChessBoard from '../helpers/initialiseChessBoard';
 import '@testing-library/jest-dom/extend-expect';
+import { Theme } from '../helpers/types';
 
 const renderComponent = (
   onClick: () => void, squares: any[], disabled: boolean = false, rotateBoard: string = ""
 ) => {
   render(
-    <Board squares={squares} onClick={onClick} disabled={disabled} rotateBoard={rotateBoard} />
+    <Board 
+      squares={squares} 
+      onClick={onClick} 
+      disabled={disabled} 
+      rotateBoard={rotateBoard} 
+      theme={Theme.Light}
+    />
   );
 };
 

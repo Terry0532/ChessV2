@@ -72,11 +72,20 @@ ul {
 /*Board color scheme Wheat from http://omgchess.blogspot.com/2015/09/chess-board-color-schemes.html*/
 
 .dark-square {
+  transition: background-color 0.3s ease, color 0.3s ease;
   background-color: RGB(187, 190, 100);
 }
 
+.dark-square.dark {
+  background-color: #800000;
+}
+
 .light-square {
+  transition: background-color 0.3s ease, color 0.3s ease;
   background-color: RGB(234, 240, 206);
+}
+.light-square.dark {
+  background-color: #bdb76b;
 }
 
 #player-turn-box {
@@ -84,6 +93,10 @@ ul {
   height: 32px;
   border: 1px solid #000;
   margin-bottom: 10px;
+}
+
+#player-turn-box.dark {
+  border: 1px solid #e0e0e0;
 }
 
 h3 {
@@ -96,4 +109,20 @@ h3 {
 
 .highlight-color {
   background-color: rgb(111, 143, 114);
+}
+
+.theme-selector {
+  margin-top: 20px;
+}
+
+.dark-mode {
+  background-color: #121212;
+}
+
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+small.dark, h3.dark, .game-status.dark, p.dark {
+  color: #e0e0e0;
 }

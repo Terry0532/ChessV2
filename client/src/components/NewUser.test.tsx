@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import NewUser from './NewUser';
 import { SocketServerMock } from 'socket.io-mock-ts';
+import { Theme } from '../helpers/types';
 
 const socket = new SocketServerMock();
 const registrationConfirmation = jest.fn();
@@ -19,6 +20,7 @@ const renderComponent = () => {
       socket={client} 
       registrationConfirmation={registrationConfirmation} 
       startOfflineGame={startOfflineGame}
+      theme={Theme.Light}
     />
   );
 };

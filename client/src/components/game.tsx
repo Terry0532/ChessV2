@@ -10,9 +10,10 @@ import Rook from "../pieces/rook";
 import NewUser from "./NewUser";
 import ShowUsers from "./ShowUsers";
 import { gameReducer, initialGameState } from "./gameReducer";
-import { ChessPiece, Player, PlayerAction } from "../helpers/types";
+import { ChessPiece, Player, PlayerAction, Theme } from "../helpers/types";
 import { convertMoveToNotation } from "../helpers/convertMoveToNotation";
 import { Socket } from "socket.io-client";
+import { Button, ButtonGroup } from "react-bootstrap";
 
 const Game = ({ socket }: { socket: Socket }) => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
@@ -863,6 +864,17 @@ const Game = ({ socket }: { socket: Socket }) => {
     }
   };
 
+  const changeTheme = (theme: Theme) => {
+    dispatchGameAction(["changeTheme", theme]);
+
+    if (theme === Theme.Dark) {
+      document.body.classList.add('dark-mode');
+    } 
+    else {
+      document.body.classList.remove('dark-mode');
+    }
+  };
+
   useEffect(() => {
     //connected to socket
     function onConnect(data: any) {
@@ -929,18 +941,22 @@ const Game = ({ socket }: { socket: Socket }) => {
                 onClick={(i: number) => handleBoardClick(i,)}
                 disabled={gameState.disabled}
                 rotateBoard={gameState.rotateBoard}
+                theme={gameState.theme}
               />
             </div>
             <div className="game-info">
-              <h3>Turn</h3>
+              <h3 className={gameState.theme}>Turn</h3>
               <div
                 id="player-turn-box"
+                className={gameState.theme}
                 style={{ backgroundColor: gameState.turn }}
                 data-testid="player-turn-box"
               ></div>
-              <p data-testid="algebraic-notation">{gameState.notation}</p>
+              <p className={gameState.theme} data-testid="algebraic-notation">
+                {gameState.notation}
+              </p>
               <div 
-                className="game-status" 
+                className={"game-status "  + gameState.theme}
                 data-testid="game-status"
               >
                 {gameState.status}
@@ -953,30 +969,37 @@ const Game = ({ socket }: { socket: Socket }) => {
                   />
                 }
               </div>
-              <button
+              <Button
                 onClick={newGame}
                 style={{ display: gameState.hideButton }}
                 data-testid="new-game-button"
+                variant={getButtonVariant(gameState.theme)}
               >
                 {gameState.newGameButton}
-              </button>
-              <button onClick={leaveGame} data-testid="leave-game-button">
+              </Button>
+              <Button 
+                onClick={leaveGame} 
+                data-testid="leave-game-button"
+                variant={getButtonVariant(gameState.theme)}
+              >
                 {gameState.leaveButton}
-              </button>
+              </Button>
               {!gameState.offlineMode && (
                 <>
-                  <button
+                  <Button
                     onClick={resignButton}
                     style={{ display: gameState.hideResignButton }}
+                    variant={getButtonVariant(gameState.theme)}
                   >
                     Resign
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={drawButton}
                     style={{ display: gameState.hideDrawButton }}
+                    variant={getButtonVariant(gameState.theme)}
                   >
                     Draw
-                  </button>
+                  </Button>
                 </>
               )}
             </div>
@@ -984,7 +1007,7 @@ const Game = ({ socket }: { socket: Socket }) => {
           <div className="icons-attribution">
             <div>
               {" "}
-              <small>
+              <small className={gameState.theme}>
                 {" "}
                 Chess Icons And Favicon (extracted) By en:User:Cburnett [
                 <a href="http://www.gnu.org/copyleft/fdl.html">GFDL</a>,{" "}
@@ -1018,6 +1041,7 @@ const Game = ({ socket }: { socket: Socket }) => {
                   socket={socket}
                   registrationConfirmation={(data) => dispatchGameAction(["registrationConfirmation", data])}
                   startOfflineGame={() => dispatchGameAction(["startOfflineGame"])}
+                  theme={gameState.theme}
                 />
               ) : (
                 <p>Loading...</p>
@@ -1026,6 +1050,22 @@ const Game = ({ socket }: { socket: Socket }) => {
           )}
         </div>
       )}
+      <ButtonGroup className="theme-selector">
+        <Button 
+          variant={gameState.theme}
+          active={gameState.theme === Theme.Light}
+          onClick={() => changeTheme(Theme.Light)}
+        >
+          Light Mode
+        </Button>
+        <Button 
+          variant={gameState.theme} 
+          active={gameState.theme === Theme.Dark}
+          onClick={() => changeTheme(Theme.Dark)}
+        >
+          Dark Mode
+        </Button>
+      </ButtonGroup>
     </div>
   );
 };
@@ -1057,4 +1097,8 @@ export const getAllPossibleMoves = (squares: any[], player: Player) => {
   }
   
   return uniqueMoves;
+};
+
+export const getButtonVariant = (theme: Theme) => {
+  return theme === Theme.Light ? "outline-primary" : "outline-info";
 };
