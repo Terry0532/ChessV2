@@ -115,14 +115,22 @@ h3 {
   margin-top: 20px;
 }
 
-.dark-mode {
+.dark-mode, button.dark {
   background-color: #121212;
+}
+
+button.dark.opponent-item:hover {
+  background-color: #e0e0e0 !important;
+}
+
+button.opponent-item.light {
+  background-color: white;
 }
 
 body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-small.dark, h3.dark, .game-status.dark, p.dark {
+small.dark, h3.dark, .game-status.dark, p.dark, label.dark, h2.dark, button.dark {
   color: #e0e0e0;
 }

@@ -14,9 +14,12 @@ import { ChessPiece, Player, PlayerAction, Theme } from "../helpers/types";
 import { convertMoveToNotation } from "../helpers/convertMoveToNotation";
 import { Socket } from "socket.io-client";
 import { Button, ButtonGroup } from "react-bootstrap";
+import { useAuth } from "../firebase/AuthContext";
+import { signOutUser } from "../firebase/auth";
 
 const Game = ({ socket }: { socket: Socket }) => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
+  const { currentUser, loading } = useAuth();
 
   const emitGameEvent = (event: string, additionalData = {}) => {
     const payload = {
@@ -1066,6 +1069,18 @@ const Game = ({ socket }: { socket: Socket }) => {
           Dark Mode
         </Button>
       </ButtonGroup>
+      {/* {currentUser && (
+        <Button 
+          variant={gameState.theme} 
+          onClick={() => {
+            signOutUser();
+            leaveGame();
+          }}
+          style={{ marginTop: 5 }}
+        >
+          Log Out
+        </Button>
+      )} */}
     </div>
   );
 };

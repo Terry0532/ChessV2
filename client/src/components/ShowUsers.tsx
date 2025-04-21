@@ -1,6 +1,7 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { ListGroup } from 'react-bootstrap';
-import { GameState } from '../helpers/types';
+import { GameState, Theme } from '../helpers/types';
+import { getButtonVariant } from './game';
 
 type ShowUsersProps = {
   socket: any;
@@ -93,14 +94,14 @@ const ShowUsers: React.FC<ShowUsersProps> = ({ socket, gameStartConfirmation, ga
 
   return (
     <Fragment>
-      <h2 data-testid="game-lobby">Please select opponent from the following</h2>
+      <h2 data-testid="game-lobby" className={gameState.theme}>Please select opponent from the following</h2>
       <ListGroup>
         {opponents.map(function (opponent, index) {
           return (
             <ListGroup.Item 
               onClick={() => selectOpponent(index)} 
               action={true} 
-              className="opponent-item" 
+              className={"opponent-item" + (gameState.theme === Theme.Light ? " light" : " dark")} 
               key={index}
               data-testid={"opponent-" + index}
             >

@@ -39,7 +39,7 @@ module.exports = (io) => {
         }
 
       }
-      client.emit('checkUserDetailResponse', !flag);
+      // client.emit('checkUserDetailResponse', !flag);
     });
 
     //respond with current online users
