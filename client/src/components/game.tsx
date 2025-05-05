@@ -938,6 +938,7 @@ const Game = ({ socket }: { socket: Socket }) => {
     if (!loading && theme !== gameState.theme) {
       changeTheme(theme);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, loading]);
 
   return (
@@ -1082,6 +1083,7 @@ const Game = ({ socket }: { socket: Socket }) => {
           onClick={() => {
             signOutUser();
             leaveGame();
+            dispatchGameAction(["registrationConfirmation", false])
           }}
           style={{ marginTop: 5 }}
         >
