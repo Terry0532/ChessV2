@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { GameMode, Theme } from '../helpers/types';
 import { getButtonVariant } from './game';
 import { createUserWithEmail, signInWithEmail } from '../firebase/auth';
+import { useAuth } from '../firebase/AuthContext';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 type NewUserProps = {
   socket: any;
@@ -18,6 +21,13 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
   const [gameMode, setGameMode] = useState<GameMode>();
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
   const [displayName, setDisplayName] = useState<string>("");
+  const { currentUser, loading } = useAuth();
+
+  const connectAndRedirect = (name: string) => {
+    socket.connect();
+    socket.emit("checkUserDetail", { name });
+    registrationConfirmation(true);
+  };
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +42,28 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
     }
 
     if (result.success) {
-      socket.connect();
-      socket.emit("checkUserDetail", { name: result.user.displayName || result.user.email });
-      registrationConfirmation(true);
+      try {
+        const userName = result.user.displayName || result.user.email;
+        const userRef = doc(db, 'users', result.user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (!userSnap.exists()) {
+          await setDoc(userRef, {
+            name: userName,
+            played: 0,
+            won: 0,
+            lost: 0,
+            draw: 0,
+            theme: Theme.Light,
+            createdAt: new Date()
+          });
+        }
+      } 
+      catch (error) {
+        console.error("Error saving user to Firestore:", error);
+      }
+
+      connectAndRedirect(result.user.displayName || result.user.email);
     }
     else {
       setErrorMessage(result.error.split(": ")[1].trim());
@@ -43,7 +72,12 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
 
   const selectGameMode = (mode: GameMode) => {
     if (mode === GameMode.Online) {
-      setGameMode(GameMode.Online);
+      if (currentUser && !loading) {
+        connectAndRedirect(currentUser.displayName || currentUser.email);
+      }
+      else {
+        setGameMode(GameMode.Online);
+      }
     }
     else if (mode === GameMode.Offline) {
       setGameMode(GameMode.Offline);

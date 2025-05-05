@@ -19,7 +19,7 @@ import { signOutUser } from "../firebase/auth";
 
 const Game = ({ socket }: { socket: Socket }) => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
-  const { currentUser, loading } = useAuth();
+  const { currentUser, loading, updateTheme, theme } = useAuth();
 
   const emitGameEvent = (event: string, additionalData = {}) => {
     const payload = {
@@ -869,6 +869,7 @@ const Game = ({ socket }: { socket: Socket }) => {
 
   const changeTheme = (theme: Theme) => {
     dispatchGameAction(["changeTheme", theme]);
+    updateTheme(theme);
 
     if (theme === Theme.Dark) {
       document.body.classList.add('dark-mode');
@@ -932,6 +933,12 @@ const Game = ({ socket }: { socket: Socket }) => {
     };
     // eslint-disable-next-line
   }, [gameState]);
+
+  useEffect(() => {
+    if (!loading && theme !== gameState.theme) {
+      changeTheme(theme);
+    }
+  }, [theme, loading]);
 
   return (
     <div>
@@ -1069,7 +1076,7 @@ const Game = ({ socket }: { socket: Socket }) => {
           Dark Mode
         </Button>
       </ButtonGroup>
-      {/* {currentUser && (
+      {currentUser && (
         <Button 
           variant={gameState.theme} 
           onClick={() => {
@@ -1080,7 +1087,7 @@ const Game = ({ socket }: { socket: Socket }) => {
         >
           Log Out
         </Button>
-      )} */}
+      )}
     </div>
   );
 };
