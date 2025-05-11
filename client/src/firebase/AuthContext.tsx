@@ -1,22 +1,25 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { onAuthStateChange, getCurrentUser } from './auth';
-import { db } from './config';
+import { db, rtdb } from './config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Theme } from '../helpers/types';
+import { onDisconnect, onValue, ref, serverTimestamp, set } from 'firebase/database';
 
 interface AuthContextType {
   currentUser: User | null;
   loading: boolean;
   updateTheme: (theme: Theme) => Promise<void>;
   theme: Theme;
+  updateSocketId: (socketId: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   currentUser: null,
   loading: true,
   updateTheme: async (theme: Theme) => {},
-  theme: Theme.Light
+  theme: Theme.Light,
+  updateSocketId: (socketId: string) => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -25,6 +28,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [theme, setTheme] = useState<Theme>(Theme.Light);
+  const [socketId, setSocketId] = useState<string | null>(null);
+
+  const updateSocketId = (newSocketId: string) => {
+    setSocketId(newSocketId);
+  };
+
+  const updateUserPresence = (user: User, clientSocketId: string) => {
+    const uid = user.uid;
+    const userStatusRef = ref(rtdb, `status/${uid}`);
+    const connectedRef = ref(rtdb, '.info/connected');
+    
+    onValue(connectedRef, (snapshot) => {
+      if (snapshot.val() === true) {
+        const isOnline = {
+          state: 'online',
+          displayName: user.displayName || user.email,
+          lastChanged: serverTimestamp(),
+          socketId: clientSocketId
+        };
+        
+        set(userStatusRef, isOnline);
+        
+        onDisconnect(userStatusRef).set({
+          state: 'offline',
+          displayName: user.displayName || user.email,
+          lastChanged: serverTimestamp(),
+          socketId: null
+        });
+      }
+    });
+  };
 
   const updateTheme = async (theme: Theme) => {
     if (currentUser) {
@@ -59,6 +93,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user) {
       setCurrentUser(user);
       updateUserPreferences(user.uid);
+      if (socketId) {
+        updateUserPresence(user, socketId);
+      }
     }
 
     const unsubscribe = onAuthStateChange((user) => {
@@ -66,19 +103,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (user) {
         updateUserPreferences(user.uid);
+        if (socketId) {
+          updateUserPresence(user, socketId);
+        }
       }
 
       setLoading(false);
     });
 
     return unsubscribe;
-  }, []);
+  }, [socketId]);
 
   const value = {
     currentUser,
     loading,
     theme,
-    updateTheme
+    updateTheme,
+    updateSocketId,
   };
 
   return (

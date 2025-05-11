@@ -8,7 +8,8 @@ import {
   signInWithPopup,
   updateProfile
 } from 'firebase/auth';
-import { auth } from './config';
+import { auth, rtdb } from './config';
+import { ref, serverTimestamp, set } from 'firebase/database';
 
 export const signInWithEmail = async (email: string, password: string) => {
   try {
@@ -48,6 +49,18 @@ export const signInWithGoogle = async () => {
 
 export const signOutUser = async () => {
   try {
+    const user = auth.currentUser;
+    
+    if (user) {
+      const userStatusRef = ref(rtdb, `status/${user.uid}`);
+      await set(userStatusRef, {
+        state: 'offline',
+        displayName: user.displayName || user.email,
+        lastChanged: serverTimestamp(),
+        socketId: null
+      });
+    }
+    
     await signOut(auth);
     return { success: true };
   }

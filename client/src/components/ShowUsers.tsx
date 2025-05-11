@@ -1,7 +1,6 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { ListGroup } from 'react-bootstrap';
 import { GameState, Theme } from '../helpers/types';
-import { getButtonVariant } from './game';
 
 type ShowUsersProps = {
   socket: any;

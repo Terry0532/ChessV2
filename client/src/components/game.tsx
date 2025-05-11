@@ -19,7 +19,7 @@ import { signOutUser } from "../firebase/auth";
 
 const Game = ({ socket }: { socket: Socket }) => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
-  const { currentUser, loading, updateTheme, theme } = useAuth();
+  const { currentUser, loading, updateTheme, theme, updateSocketId } = useAuth();
 
   const emitGameEvent = (event: string, additionalData = {}) => {
     const payload = {
@@ -880,9 +880,11 @@ const Game = ({ socket }: { socket: Socket }) => {
   };
 
   useEffect(() => {
-    //connected to socket
     function onConnect(data: any) {
-      dispatchGameAction(["connected", data.id]);
+      if (currentUser && data && data.id) {
+        updateSocketId(data.id);
+        dispatchGameAction(["connected", data.id]);
+      }
     }
     function continueGame() {
       dispatchGameAction(["continueGame"]);
@@ -1082,7 +1084,7 @@ const Game = ({ socket }: { socket: Socket }) => {
           variant={gameState.theme} 
           onClick={() => {
             signOutUser();
-            leaveGame();
+            // leaveGame();
             dispatchGameAction(["registrationConfirmation", false])
           }}
           style={{ marginTop: 5 }}
