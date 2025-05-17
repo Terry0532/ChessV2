@@ -130,3 +130,19 @@ export type GameAction =
       promotionPiece?: any;
     }
   ];
+
+export type Opponent = {
+  uid: string;
+  socketId: string;
+  name: string;
+  played: number;
+  won: number;
+  draw: number;
+};
+
+export type UserStatus = {
+  state: string;
+  displayName: string;
+  lastChanged: number;
+  socketId: string;
+};

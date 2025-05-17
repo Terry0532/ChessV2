@@ -1,10 +1,10 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
-import { onAuthStateChange, getCurrentUser } from './auth';
+import { onAuthStateChange } from './auth';
 import { db, rtdb } from './config';
 import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { Theme } from '../helpers/types';
-import { onDisconnect, onValue, ref, serverTimestamp, set } from 'firebase/database';
+import { onDisconnect, ref, serverTimestamp, set } from 'firebase/database';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -35,28 +35,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUserPresence = (user: User, clientSocketId: string) => {
-    const uid = user.uid;
-    const userStatusRef = ref(rtdb, `status/${uid}`);
-    const connectedRef = ref(rtdb, '.info/connected');
+    const userStatusRef = ref(rtdb, `status/${user.uid}`);
     
-    onValue(connectedRef, (snapshot) => {
-      if (snapshot.val() === true) {
-        const isOnline = {
-          state: 'online',
-          displayName: user.displayName || user.email,
-          lastChanged: serverTimestamp(),
-          socketId: clientSocketId
-        };
-        
-        set(userStatusRef, isOnline);
-        
-        onDisconnect(userStatusRef).set({
-          state: 'offline',
-          displayName: user.displayName || user.email,
-          lastChanged: serverTimestamp(),
-          socketId: null
-        });
-      }
+    set(userStatusRef, {
+      state: "online",
+      displayName: user.displayName || user.email,
+      lastChanged: serverTimestamp(),
+      socketId: clientSocketId
+    });
+    
+    onDisconnect(userStatusRef).set({
+      state: "offline",
+      lastChanged: serverTimestamp(),
+      socketId: null
     });
   };
 
@@ -88,16 +79,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    const user = getCurrentUser();
-
-    if (user) {
-      setCurrentUser(user);
-      updateUserPreferences(user.uid);
-      if (socketId) {
-        updateUserPresence(user, socketId);
-      }
-    }
-
     const unsubscribe = onAuthStateChange((user) => {
       setCurrentUser(user);
 
@@ -115,11 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [socketId]);
 
   const value = {
-    currentUser,
-    loading,
-    theme,
-    updateTheme,
-    updateSocketId,
+    currentUser, loading, theme, updateTheme, updateSocketId,
   };
 
   return (

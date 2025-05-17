@@ -1,6 +1,9 @@
 import React, { Fragment, useEffect, useState } from 'react';
 import { ListGroup } from 'react-bootstrap';
-import { GameState, Theme } from '../helpers/types';
+import { GameState, Opponent, Theme, UserStatus } from '../helpers/types';
+import { rtdb } from '../firebase/config';
+import { onChildAdded, onChildChanged, onChildRemoved, ref, Unsubscribe } from 'firebase/database';
+import { getCurrentUser } from '../firebase/auth';
 
 type ShowUsersProps = {
   socket: any;
@@ -8,87 +11,95 @@ type ShowUsersProps = {
   gameState: GameState;
 };
 
-type Opponent = {
-  id: string;
-  name: string;
-  played: number;
-  won: number;
-  draw: number;
-}
-
 const ShowUsers: React.FC<ShowUsersProps> = ({ socket, gameStartConfirmation, gameState }) => {
   const [opponents, setOpponents] = useState<Opponent[]>([]);
 
   const selectOpponent = (index: number) => {
-    socket.emit('selectOpponent', { "id": opponents[index].id });
+    socket.emit('selectOpponent', { "id": opponents[index].socketId });
   };
 
   useEffect(() => {
-    function getOpponentsResponse(data: Opponent[]) {
-      setOpponents(data);
-    };
-    function newOpponentAdded(data: Opponent) {
-      if (!opponents.some((opponent) => opponent.id === data.id)) {
-        setOpponents([...opponents, data]);
-      }
-    };
-    function opponentDisconnected(data: Opponent) {
-      let flag = false;
-      let i = 0;
-      for (i; i < opponents.length; i++) {
-        if (opponents[i].id === data.id) {
-          flag = true;
-          break;
-        }
-      }
-      if (flag) {
-        let newOpponents = [...opponents];
-        newOpponents.splice(i, 1);
-        setOpponents(newOpponents);
-      }
-    };
-    function excludePlayers(data: string[]) {
-      for (let j = 0; j < data.length; j++) {
-        let flag = false;
-        let i = 0;
-        for (i = 0; i < opponents.length; i++) {
-          if (opponents[i].id === data[j]) {
-            flag = true;
-            break;
-          }
-        }
-        if (flag) {
-          const newOpponents = [...opponents];
-          newOpponents.splice(i, 1);
-          setOpponents(newOpponents);
-        }
-      }
-    };
     function gameStarted(data: any) {
       gameStartConfirmation(data);
     };
-
-    socket.on('getOpponentsResponse', getOpponentsResponse);
-    socket.on('newOpponentAdded', newOpponentAdded);
-    socket.on('opponentDisconnected', opponentDisconnected);
-    socket.on('excludePlayers', excludePlayers);
-    socket.on('alreadyInGame', excludePlayers);
     socket.on('gameStarted', gameStarted);
-
     return () => {
-      socket.off('getOpponentsResponse', getOpponentsResponse);
-      socket.off('newOpponentAdded', newOpponentAdded);
-      socket.off('opponentDisconnected', opponentDisconnected);
-      socket.off('excludePlayers', excludePlayers);
-      socket.off('alreadyInGame', excludePlayers);
       socket.off('gameStarted', gameStarted);
     };
-    // eslint-disable-next-line
-  }, [opponents, gameState]);
+  }, [socket, gameStartConfirmation]);
 
   useEffect(() => {
-    socket.emit("getOpponents", {});
-    // eslint-disable-next-line
+    const statusRef = ref(rtdb, 'status');
+    const listeners: Unsubscribe[] = [];
+    const currentUser = getCurrentUser();
+    
+    const addedUnsubscribe = onChildAdded(statusRef, (snapshot) => {
+      const uid = snapshot.key;
+      const user = snapshot.val() as UserStatus;
+      
+      if (uid !== currentUser.uid && user.state === 'online' && user.socketId) {
+        setOpponents((prev) => {
+          if (!prev.some((opponent) => opponent.uid === uid)) {
+            return [...prev, {
+              uid,
+              socketId: user.socketId,
+              name: user.displayName,
+              played: 0,
+              won: 0,
+              draw: 0
+            }];
+          }
+          return prev;
+        });
+      }
+    });
+    listeners.push(addedUnsubscribe);
+    
+    const changedUnsubscribe = onChildChanged(statusRef, (snapshot) => {
+      const uid = snapshot.key;
+      const user = snapshot.val() as UserStatus;
+      
+      setOpponents((prev) => {
+        if (uid === currentUser.uid) {
+          return prev;
+        }
+        if (user.state === "online" && user.socketId) {
+          const index = prev.findIndex((opponent) => opponent.uid === uid);
+          
+          if (index >= 0) {
+            const updated = [...prev];
+            updated[index] = {
+              ...updated[index],
+              name: user.displayName,
+            };
+            return updated;
+          } 
+          else {
+            return [...prev, {
+              uid,
+              socketId: user.socketId,
+              name: user.displayName,
+              played: 0,
+              won: 0,
+              draw: 0
+            }];
+          }
+        } 
+        else if (user.state === "offline") {
+          return prev.filter((opponent) => opponent.uid !== uid);
+        }
+      });
+    });
+    listeners.push(changedUnsubscribe);
+    
+    const removedUnsubscribe = onChildRemoved(statusRef, (snapshot) => {
+      setOpponents((prev) => prev.filter(opponent => opponent.uid !== snapshot.key));
+    });
+    listeners.push(removedUnsubscribe);
+    
+    return () => {
+      listeners.forEach(unsubscribe => unsubscribe());
+    };
   }, []);
 
   return (
