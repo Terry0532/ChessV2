@@ -1,7 +1,24 @@
+require('dotenv').config();
+const admin = require("firebase-admin");
+const serviceAccount = require(process.env.KEY_PATH);
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: process.env.DATABASE_URL
+});
+
 module.exports = (io) => {
   let sockets = {};
   let players = {};
   let games = {};
+
+  const inGamePlayers = {};
+  // admin.database().ref('testConnection').set({ status: 'connected', timestamp: Date.now() })
+  // .then(() => {
+  //   console.log('Firebase Admin SDK connected and test write succeeded.');
+  // })
+  // .catch((err) => {
+  //   console.error('Firebase Admin SDK connection failed:', err);
+  // });
 
   io.on("connection", (client) => {
     console.log("connected : " + client.id);
@@ -85,42 +102,58 @@ module.exports = (io) => {
       });
     });
 
-    client.on('selectOpponent', (data) => {
-      if (sockets[data.id] && !sockets[data.id].is_playing && !sockets[client.id].is_playing) {
-        var gameId = uuidv4();
-        sockets[data.id].is_playing = true;
-        sockets[client.id].is_playing = true;
-        sockets[data.id].game_id = gameId;
-        sockets[client.id].game_id = gameId;
-        players[sockets[data.id].name].played = players[sockets[data.id].name].played + 1;
-        players[sockets[client.id].name].played = players[sockets[client.id].name].played + 1;
+    client.on('selectOpponent', async (data) => {
+      const whitePlayerId = client.id;
+      const blackPlayerId = data.id;
 
-        games[gameId] = {
-          player1: client.id,
-          player2: data.id,
-          whose_turn: client.id,
-          game_status: "ongoing", // "ongoing","won","draw"
-          game_winner: null // winner_id if status won
-        };
-        games[gameId][client.id] = {
-          name: sockets[client.id].name,
-          side: "white",
-          played: players[sockets[client.id].name].played,
-          won: players[sockets[client.id].name].won,
-          draw: players[sockets[client.id].name].draw
-        };
-        games[gameId][data.id] = {
-          name: sockets[data.id].name,
-          side: "black",
-          played: players[sockets[data.id].name].played,
-          won: players[sockets[data.id].name].won,
-          draw: players[sockets[data.id].name].draw
-        };
-        io.sockets.connected[client.id].join(gameId);
-        io.sockets.connected[data.id].join(gameId);
-        io.emit('excludePlayers', [client.id, data.id]);
+      if (!inGamePlayers[whitePlayerId] && !inGamePlayers[blackPlayerId]) {
+        const gameId = uuidv4();
+        // sockets[data.id].is_playing = true;
+        // sockets[client.id].is_playing = true;
+        // sockets[data.id].game_id = gameId;
+        // sockets[client.id].game_id = gameId;
+        // players[sockets[data.id].name].played = players[sockets[data.id].name].played + 1;
+        // players[sockets[client.id].name].played = players[sockets[client.id].name].played + 1;
+
+        inGamePlayers[blackPlayerId].gameId = gameId;
+        inGamePlayers[whitePlayerId].gameId = gameId;
+
+        await admin.database().ref(`games/${gameId}`).set({
+          whitePlayer: whitePlayerId,
+          blackPlayer: blackPlayerId,
+          startedAt: Date.now(),
+          whoseTurn: whitePlayerId,
+          moves: [],
+          winner: null,
+        });
+
+        // games[gameId] = {
+        //   player1: client.id,
+        //   player2: data.id,
+        //   whose_turn: client.id,
+        //   game_status: "ongoing", // "ongoing","won","draw"
+        //   game_winner: null // winner_id if status won
+        // };
+        // games[gameId][client.id] = {
+        //   name: sockets[client.id].name,
+        //   side: "white",
+        //   played: players[sockets[client.id].name].played,
+        //   won: players[sockets[client.id].name].won,
+        //   draw: players[sockets[client.id].name].draw
+        // };
+        // games[gameId][data.id] = {
+        //   name: sockets[data.id].name,
+        //   side: "black",
+        //   played: players[sockets[data.id].name].played,
+        //   won: players[sockets[data.id].name].won,
+        //   draw: players[sockets[data.id].name].draw
+        // };
+        io.sockets.connected[whitePlayerId].join(gameId);
+        io.sockets.connected[blackPlayerId].join(gameId);
+        // io.emit('excludePlayers', [client.id, data.id]);
         io.to(gameId).emit('gameStarted', { status: true, game_id: gameId, game_data: games[gameId] });
-      } else {
+      } 
+      else {
         client.emit("alreadyInGame", [data.id])
       }
     });
