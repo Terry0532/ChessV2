@@ -37,10 +37,10 @@ const Game = ({ socket }: { socket: Socket }) => {
       }]);
     }
     else if (gameState.continueGame) {
-      emitGameEvent("newGame", { check: true });
+      emitGameEvent("newGame", { askOpponent: true });
     }
     else {
-      emitGameEvent("newGame", { check: false });
+      emitGameEvent("newGame", { askOpponent: false });
       dispatchGameAction(["newGame"]);
     }
   };
@@ -565,19 +565,20 @@ const Game = ({ socket }: { socket: Socket }) => {
         }
       }
 
-      dispatchGameAction([
-        "updateNotation", 
-        convertMoveToNotation(
-          gameState.sourceSelection, 
-          newTargetPosition, 
-          isPormotion ? gameState.promotionOldBoard : board, 
-          canEnpassant, 
-          gameState.turn, 
-          nextPlayerValidatedMoves, 
-          newBoard,
-          isPormotion
-        )
-      ]);
+      const move = convertMoveToNotation(
+        gameState.sourceSelection, 
+        newTargetPosition, 
+        isPormotion ? gameState.promotionOldBoard : board, 
+        canEnpassant, 
+        gameState.turn, 
+        nextPlayerValidatedMoves, 
+        newBoard,
+        isPormotion
+      );
+      dispatchGameAction(["updateNotation", move]);
+      if (!gameState.offlineMode) {
+        emitGameEvent("updateNotation", { move });
+      }
     }
   }
 

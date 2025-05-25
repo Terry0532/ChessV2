@@ -15,7 +15,14 @@ const ShowUsers: React.FC<ShowUsersProps> = ({ socket, gameStartConfirmation, ga
   const [opponents, setOpponents] = useState<Opponent[]>([]);
 
   const selectOpponent = (index: number) => {
-    socket.emit('selectOpponent', { "id": opponents[index].socketId });
+    socket.emit(
+      'selectOpponent', 
+      { 
+        socketId: opponents[index].socketId,
+        uid: opponents[index].uid,
+        myUid: getCurrentUser().uid,
+      }
+    );
   };
 
   useEffect(() => {
