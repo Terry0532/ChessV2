@@ -185,6 +185,23 @@ module.exports = (io) => {
           gameData.game_winner = gameData.player2;
           gameData.game_status = "finished";
         }
+
+        const previousGameRef = admin.database().ref(`liveGames/${data.gameId}`);
+        const gameSnap = await previousGameRef.once('value');
+        const previousGameData = gameSnap.val();
+  
+        if (previousGameData) {
+          console.log("save game");
+          await admin.firestore().collection('archivedGames').doc(data.gameId).set({
+            whitePlayer: previousGameData.whitePlayer,
+            blackPlayer: previousGameData.blackPlayer,
+            moves: Object.values(previousGameData.moves || []),
+            result: data.result,
+            startedAt: previousGameData.startedAt,
+            finishedAt: admin.firestore.FieldValue.serverTimestamp()
+          });
+          await previousGameRef.remove();
+        }
         
         await setGameData(data.gameId, gameData);
         io.to(opponentId).emit("gameover", { result: data.result });
@@ -225,22 +242,6 @@ module.exports = (io) => {
             game_winner: null,
             moves: []
           };
-    
-          const previousGameRef = admin.database().ref(`liveGames/${data.gameId}`);
-          const gameSnap = await previousGameRef.once('value');
-          const previousGameData = gameSnap.val();
-    
-          if (previousGameData) {
-            await admin.firestore().collection('archivedGames').doc(data.gameId).set({
-              whitePlayer: previousGameData.whitePlayer,
-              blackPlayer: previousGameData.blackPlayer,
-              moves: Object.values(previousGameData.moves || []),
-              result: data.result,
-              startedAt: previousGameData.startedAt,
-              finishedAt: admin.firestore.FieldValue.serverTimestamp()
-            });
-            await previousGameRef.remove();
-          }
           
           await setPlayerInGame(gameData.player1, {
             gameId: newGameId,
