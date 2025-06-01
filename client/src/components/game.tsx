@@ -1085,6 +1085,9 @@ const Game = ({ socket }: { socket: Socket }) => {
           variant={gameState.theme} 
           onClick={() => {
             signOutUser();
+            if (socket.connected) {
+              socket.disconnect();
+            }
             // leaveGame();
             dispatchGameAction(["registrationConfirmation", false])
           }}
