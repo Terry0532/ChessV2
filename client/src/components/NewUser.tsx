@@ -23,10 +23,25 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
   const [displayName, setDisplayName] = useState<string>("");
   const { currentUser, loading } = useAuth();
 
-  const connectAndRedirect = (name: string) => {
+  const connectAndRedirect = async (name: string) => {
     socket.connect();
     socket.emit("checkUserDetail", { name });
     registrationConfirmation(true);
+
+    try {
+      socket.connect();
+      
+      // socket.on('connect_error', (error) => {
+      //   console.error('Socket connection error:', error);
+      //   setErrorMessage('Connection failed. Please try again.');
+      // });
+      
+      socket.emit("checkUserDetail", { name });
+      registrationConfirmation(true);
+    } catch (error) {
+      console.error('Error connecting to socket:', error);
+      setErrorMessage('Failed to connect. Please try again.');
+    }
   };
 
   const handleAuth = async (e: React.FormEvent) => {

@@ -34,21 +34,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSocketId(newSocketId);
   };
 
-  const updateUserPresence = (user: User, clientSocketId: string) => {
-    const userStatusRef = ref(rtdb, `status/${user.uid}`);
-    
-    set(userStatusRef, {
-      state: "online",
-      displayName: user.displayName || user.email,
-      lastChanged: serverTimestamp(),
-      socketId: clientSocketId
-    });
-    
-    onDisconnect(userStatusRef).set({
-      state: "offline",
-      lastChanged: serverTimestamp(),
-      socketId: null
-    });
+  const updateUserPresence = async (user: User, clientSocketId: string) => {
+    try {
+      const userStatusRef = ref(rtdb, `status/${user.uid}`);
+      
+      await set(userStatusRef, {
+        state: "online",
+        displayName: user.displayName || user.email,
+        lastChanged: serverTimestamp(),
+        socketId: clientSocketId
+      });
+      
+      onDisconnect(userStatusRef).set({
+        state: "offline",
+        lastChanged: serverTimestamp(),
+        socketId: null
+      });
+    } catch (error) {
+      console.error("Error updating user presence:", error);
+    }
   };
 
   const updateTheme = async (theme: Theme) => {
@@ -83,9 +87,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setCurrentUser(user);
 
       if (user) {
-        updateUserPreferences(user.uid);
-        if (socketId) {
-          updateUserPresence(user, socketId);
+        try {
+          updateUserPreferences(user.uid);
+          if (socketId) {
+            updateUserPresence(user, socketId);
+          }
+        } catch (error) {
+          console.error("Error in auth state change:", error);
         }
       }
 

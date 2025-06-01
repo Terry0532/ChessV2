@@ -916,6 +916,9 @@ const Game = ({ socket }: { socket: Socket }) => {
       alert("Opponent left");
       dispatchGameAction(["toLobby"]);
     }
+    function onDisconnect(reason: string) {
+      console.log('Disconnected from server:', reason);
+    }
 
     socket.on("connected", onConnect);
     socket.on("updateGameData", updateGameData);
@@ -924,6 +927,7 @@ const Game = ({ socket }: { socket: Socket }) => {
     socket.on("nextGameData", nextGameData);
     socket.on("drawButton", drawButton);
     socket.on("toLobby", toLobby);
+    socket.on("disconnect", onDisconnect);
 
     return () => {
       socket.off("connected", onConnect);
@@ -933,6 +937,7 @@ const Game = ({ socket }: { socket: Socket }) => {
       socket.off("nextGameData", nextGameData);
       socket.off("drawButton", drawButton);
       socket.off("toLobby", toLobby);
+      socket.off("disconnect", onDisconnect);
     };
     // eslint-disable-next-line
   }, [gameState]);
