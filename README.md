@@ -1,4 +1,4 @@
-## Link
+<!-- ## Link
 [Online Chess](https://warm-brushlands-64673.herokuapp.com)
 
 ## Screenshots
@@ -13,4 +13,4 @@ New game
 Leave game
 
 
-![Screenshot](images/screenshot3.gif)
+![Screenshot](images/screenshot3.gif) -->
