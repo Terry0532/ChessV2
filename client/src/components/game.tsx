@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import "../index.css";
 import Board from "./board";
 import FallenSoldierBlock from "./fallensoldiers";
@@ -16,10 +16,17 @@ import { Socket } from "socket.io-client";
 import { Button, ButtonGroup } from "react-bootstrap";
 import { useAuth } from "../firebase/AuthContext";
 import { signOutUser } from "../firebase/auth";
+import { useChessAI } from "../helpers/useChessAI";
 
 const Game = ({ socket }: { socket: Socket }) => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
   const { currentUser, loading, updateTheme, theme, updateSocketId } = useAuth();
+
+  const { getSuggestion, loading: aiLoading, error } = useChessAI();
+  const [moves, setMoves] = useState<string[]>([]);
+  const [totalHelpCount, setTotalHelpCount] = useState<number>(0);
+  const [suggestion, setSuggestion] = useState<string>("");
+  const maxHelpCount = 3;
 
   const emitGameEvent = (event: string, additionalData = {}) => {
     const payload = {
@@ -579,6 +586,12 @@ const Game = ({ socket }: { socket: Socket }) => {
       if (!gameState.offlineMode) {
         emitGameEvent("updateNotation", { move });
       }
+      else {
+        if (suggestion) {
+          setSuggestion("");
+        }
+        setMoves([...moves, move]);
+      }
     }
   }
 
@@ -880,6 +893,26 @@ const Game = ({ socket }: { socket: Socket }) => {
     }
   };
 
+  const handleAISuggestion = async () => {
+    try {
+      if (totalHelpCount < maxHelpCount) {
+        if (aiLoading) {
+          setSuggestion("AI is thinking...");
+        }
+        else {
+          setTotalHelpCount(totalHelpCount + 1);
+          const suggestion = await getSuggestion(moves);
+          setSuggestion("Suggestion: " + suggestion);
+        }
+      }
+      else {
+        setSuggestion("Max help count reached");
+      }
+    } catch (error) {
+      console.error('Failed to get AI suggestion:', error);
+    }
+  };
+
   useEffect(() => {
     function onConnect(data: any) {
       if (currentUser && data && data.id) {
@@ -974,6 +1007,7 @@ const Game = ({ socket }: { socket: Socket }) => {
               <p className={gameState.theme} data-testid="algebraic-notation">
                 {gameState.notation}
               </p>
+              <p className={gameState.theme}>{suggestion || error}</p>
               <div 
                 className={"game-status "  + gameState.theme}
                 data-testid="game-status"
@@ -1020,6 +1054,15 @@ const Game = ({ socket }: { socket: Socket }) => {
                     Draw
                   </Button>
                 </>
+              )}
+              {gameState.offlineMode && (
+                <Button 
+                  onClick={handleAISuggestion} 
+                  variant={getButtonVariant(gameState.theme)}
+                  style={{ marginLeft: 5 }}
+                >
+                  {aiLoading ? "Loading..." : (`Suggestion (${totalHelpCount}/${maxHelpCount})`)}
+                </Button>
               )}
             </div>
           </div>
