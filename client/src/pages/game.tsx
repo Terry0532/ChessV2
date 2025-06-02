@@ -16,7 +16,7 @@ import { Socket } from "socket.io-client";
 import { Button, ButtonGroup } from "react-bootstrap";
 import { useAuth } from "../firebase/AuthContext";
 import { signOutUser } from "../firebase/auth";
-import { useChessAI } from "../helpers/useChessAI";
+import { useChessAI } from "../hooks/useChessAI";
 
 const Game = ({ socket }: { socket: Socket }) => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
