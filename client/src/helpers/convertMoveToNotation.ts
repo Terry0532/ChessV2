@@ -1,4 +1,4 @@
-import { getAllPossibleMoves } from "../components/game";
+import { getAllPossibleMoves } from "../pages/game";
 import { ChessPiece } from "./types";
 
 const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];

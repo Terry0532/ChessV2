@@ -1,15 +1,15 @@
 /* eslint-disable no-unused-expressions */
 import React, { useEffect, useReducer, useState } from "react";
 import "../index.css";
-import Board from "./board";
-import FallenSoldierBlock from "./fallensoldiers";
+import Board from "../components/board";
+import FallenSoldierBlock from "../components/fallensoldiers";
 import Queen from "../pieces/queen";
 import Knight from "../pieces/knight";
 import Bishop from "../pieces/bishop";
 import Rook from "../pieces/rook";
 import NewUser from "./NewUser";
 import ShowUsers from "./ShowUsers";
-import { gameReducer, initialGameState } from "./gameReducer";
+import { gameReducer, initialGameState } from "../components/gameReducer";
 import { ChessPiece, Player, PlayerAction, Theme } from "../helpers/types";
 import { convertMoveToNotation } from "../helpers/convertMoveToNotation";
 import { Socket } from "socket.io-client";

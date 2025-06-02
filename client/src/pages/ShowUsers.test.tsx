@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/extend-expect';
 import { SocketServerMock } from 'socket.io-mock-ts';
 import ShowUsers from './ShowUsers';
-import { initialGameState } from './gameReducer';
+import { initialGameState } from '../components/gameReducer';
 
 const socket = new SocketServerMock();
 const client = socket.clientMock;
