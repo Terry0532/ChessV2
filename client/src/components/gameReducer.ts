@@ -47,6 +47,8 @@ export const initialGameState: GameState = {
   notation: "",
   promotionOldBoard: [],
   theme: Theme.Light,
+  suggestion: "",
+  moves: []
 };
 
 export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
@@ -60,6 +62,12 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
 
     case "updateNotation":
       return { ...gameState, notation: newValue };
+
+    case "updateSuggestion":
+      return { ...gameState, suggestion: newValue };
+
+    case "updateMoves":
+      return { ...gameState, moves: newValue };
 
     case "updateGameData":
       return { ...gameState, disabled: newValue };

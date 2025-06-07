@@ -58,12 +58,16 @@ export interface GameState {
   notation: string,
   promotionOldBoard: any[],
   theme: Theme,
+  suggestion: string,
+  moves: string[]
 };
 
 export type GameAction =
   | ["connected", string]
   | ["updateNotation", string]
   | ["updateGameData", boolean]
+  | ["updateSuggestion", string]
+  | ["updateMoves", string[]]
   | ["opponentLeft"]
   | ["gameover", string]
   | ["continueGame"]

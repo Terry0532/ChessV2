@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { GameMode, Theme } from '../helpers/types';
-import { getButtonVariant } from './game';
 import { createUserWithEmail, signInWithEmail } from '../firebase/auth';
 import { useAuth } from '../firebase/AuthContext';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
+import { getButtonVariant } from '../helpers/chessGameLogic';
 
 type NewUserProps = {
   socket: any;
