@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Form, Button } from 'react-bootstrap';
 import { GameMode, Theme } from '../helpers/types';
-import { createUserWithEmail, signInWithEmail } from '../firebase/auth';
+import { createUserWithEmail, signInWithEmail, signInWithGoogle } from '../firebase/auth';
 import { useAuth } from '../firebase/AuthContext';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
@@ -44,13 +44,16 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
     }
   };
 
-  const handleAuth = async (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent, useGoogle: boolean) => {
     e.preventDefault();
 
     let result: any;
 
     if (isRegistering) {
       result = await createUserWithEmail(email, password, displayName);
+    }
+    else if (useGoogle) {
+      result = await signInWithGoogle();
     }
     else {
       result = await signInWithEmail(email, password);
@@ -124,82 +127,92 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
         </div>
       )}
       {gameMode === GameMode.Online && (
-        <Form onSubmit={handleAuth} data-testid="enter-username-form">
-          <Form.Group >
-            <Form.Group>
-              <Form.Label className={theme}>Email</Form.Label>
-              <Form.Control
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter email"
-                required
-                data-bs-theme={theme}
-              />
+        <>
+          <Form onSubmit={(e) => handleAuth(e, false)} data-testid="enter-username-form">
+            <Form.Group >
+              <Form.Group>
+                <Form.Label className={theme}>Email</Form.Label>
+                <Form.Control
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter email"
+                  required
+                  data-bs-theme={theme}
+                />
+              </Form.Group>
+              <Form.Group style={{ marginTop: 5 }}>
+                <Form.Label className={theme}>Password</Form.Label>
+                <Form.Control
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Password"
+                  required
+                  data-bs-theme={theme}
+                />
+              </Form.Group>
+              {isRegistering
+                ? (
+                  <div>
+                    <Form.Group style={{ marginTop: 5 }}>
+                      <Form.Label className={theme}>Display name</Form.Label>
+                      <Form.Control
+                        type="text"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        placeholder="Name"
+                        data-bs-theme={theme}
+                      />
+                    </Form.Group>
+                    <Button
+                      onClick={(e) => handleAuth(e, false)}
+                      variant={getButtonVariant(theme)}
+                      type="submit"
+                      data-testid="submit-username-button"
+                      style={{ marginTop: 5 }}
+                    >
+                      Submit
+                    </Button>
+                  </div>
+                )
+                : (
+                  <div style={{ marginTop: 5 }}>
+                    <Button
+                      onClick={(e) => handleAuth(e, false)}
+                      variant={getButtonVariant(theme)}
+                      type="submit"
+                      data-testid="submit-username-button"
+                    >
+                      Log in
+                    </Button>
+                    <Button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setIsRegistering(true);
+                      }}
+                      variant={getButtonVariant(theme)}
+                      type="button"
+                      data-testid="submit-username-button"
+                      style={{ marginLeft: 5 }}
+                    >
+                      Sign up
+                    </Button>
+                  </div>
+                )
+              }
+              {errorMessage && <p className={theme}>{errorMessage}</p>}
             </Form.Group>
-            <Form.Group style={{ marginTop: 5 }}>
-              <Form.Label className={theme}>Password</Form.Label>
-              <Form.Control
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Password"
-                required
-                data-bs-theme={theme}
-              />
-            </Form.Group>
-            {isRegistering
-              ? (
-                <div>
-                  <Form.Group style={{ marginTop: 5 }}>
-                    <Form.Label className={theme}>Display name</Form.Label>
-                    <Form.Control
-                      type="text"
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      placeholder="Name"
-                      data-bs-theme={theme}
-                    />
-                  </Form.Group>
-                  <Button
-                    onClick={handleAuth}
-                    variant={getButtonVariant(theme)}
-                    type="submit"
-                    data-testid="submit-username-button"
-                    style={{ marginTop: 5 }}
-                  >
-                    Submit
-                  </Button>
-                </div>
-              )
-              : (
-                <div style={{ marginTop: 5 }}>
-                  <Button
-                    onClick={handleAuth}
-                    variant={getButtonVariant(theme)}
-                    type="submit"
-                    data-testid="submit-username-button"
-                  >
-                    Log in
-                  </Button>
-                  <Button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setIsRegistering(true);
-                    }}
-                    variant={getButtonVariant(theme)}
-                    type="button"
-                    data-testid="submit-username-button"
-                    style={{ marginLeft: 5 }}
-                  >
-                    Sign up
-                  </Button>
-                </div>
-              )
-            }
-            {errorMessage && <p className={theme}>{errorMessage}</p>}
-          </Form.Group>
-        </Form>
+          </Form>
+          <Button
+            onClick={(e) => handleAuth(e, true)}
+            variant={getButtonVariant(theme)}
+            type="submit"
+            style={{ marginTop: 5 }}
+          >
+            Log in with google
+          </Button>
+        </>
       )}
     </div>
   );
