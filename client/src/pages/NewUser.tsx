@@ -6,6 +6,8 @@ import { useAuth } from '../firebase/AuthContext';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { getButtonVariant } from '../helpers/chessGameLogic';
+import { ReactSVG } from 'react-svg';
+import LoadingIcon from '../icons/bouncing-circles.svg';
 
 type NewUserProps = {
   socket: any;
@@ -22,6 +24,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
   const [isRegistering, setIsRegistering] = useState<boolean>(false);
   const [displayName, setDisplayName] = useState<string>("");
   const { currentUser, loading } = useAuth();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   const connectAndRedirect = async (name: string) => {
     socket.connect();
@@ -46,6 +49,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
 
   const handleAuth = async (e: React.FormEvent, useGoogle: boolean) => {
     e.preventDefault();
+    setIsLoading(true);
 
     let result: any;
 
@@ -54,6 +58,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
     }
     else if (useGoogle) {
       result = await signInWithGoogle();
+      console.log(result)
     }
     else {
       result = await signInWithEmail(email, password);
@@ -86,6 +91,8 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
     else {
       setErrorMessage(result.error.split(": ")[1].trim());
     }
+
+    setIsLoading(false);
   };
 
   const selectGameMode = (mode: GameMode) => {
@@ -101,6 +108,19 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
       setGameMode(GameMode.Offline);
       startOfflineGame();
     }
+  };
+
+  const buttonText = (text: string) => {
+    return isLoading ? (
+      <ReactSVG 
+        src={LoadingIcon}
+        beforeInjection={(svg) => {
+          svg.setAttribute('style', 'height: 20px')
+        }}
+      />
+    ) : (
+      text
+    );
   };
 
   return (
@@ -171,8 +191,9 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
                       type="submit"
                       data-testid="submit-username-button"
                       style={{ marginTop: 5 }}
+                      disabled={isLoading}
                     >
-                      Submit
+                      {buttonText("Submit")}
                     </Button>
                   </div>
                 )
@@ -183,8 +204,9 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
                       variant={getButtonVariant(theme)}
                       type="submit"
                       data-testid="submit-username-button"
+                      disabled={isLoading}
                     >
-                      Log in
+                      {buttonText("Log in")}
                     </Button>
                     <Button
                       onClick={(e) => {
@@ -195,6 +217,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
                       type="button"
                       data-testid="submit-username-button"
                       style={{ marginLeft: 5 }}
+                      disabled={isLoading}
                     >
                       Sign up
                     </Button>
@@ -209,8 +232,9 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
             variant={getButtonVariant(theme)}
             type="submit"
             style={{ marginTop: 5 }}
+            disabled={isLoading}
           >
-            Log in with google
+            {buttonText("Log in with google")}
           </Button>
         </>
       )}
