@@ -12,7 +12,7 @@ export enum ChessPiece {
   Promotion = "Promotion"
 };
 
-export enum Theme { Dark = "dark", Light = "light" };
+export enum Theme { Dark = "dark", Light = "light", System = "system" };
 
 export enum GameMode { Online, Offline };
 

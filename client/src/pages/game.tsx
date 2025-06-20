@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import "../index.css";
 import Board from "../components/board";
 import Queen from "../pieces/queen";
@@ -22,6 +22,7 @@ import { createSocketEventHandlers } from "../helpers/socketEventHandlers";
 const Game = ({ socket }: { socket: Socket }) => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
   const { currentUser, loading, updateTheme, theme, updateSocketId } = useAuth();
+  const [themeButtonVariant, setThemeButtonVariant] = useState<"light" | "dark">("light");
 
   const emitGameEvent = (event: string, additionalData = {}) => {
     const payload = {
@@ -313,12 +314,23 @@ const Game = ({ socket }: { socket: Socket }) => {
     updateTheme(theme);
 
     if (theme === Theme.Dark) {
-      document.body.classList.add('dark-mode');
+      handleThemeChange(true);
     } 
-    else {
-      document.body.classList.remove('dark-mode');
+    else if (theme === Theme.Light) {
+      handleThemeChange(false);
     }
   };
+
+  const handleThemeChange = (isDark: boolean) => {
+    if (isDark) {
+      setThemeButtonVariant("dark");
+      document.body.classList.add('dark-mode');
+    }
+    else {
+      setThemeButtonVariant("light");
+      document.body.classList.remove('dark-mode');
+    }
+  }
 
   useEffect(() => {
     const socketHandlers = createSocketEventHandlers({
@@ -342,6 +354,16 @@ const Game = ({ socket }: { socket: Socket }) => {
     if (!loading && theme !== gameState.theme) {
       changeTheme(theme);
     }
+
+    if (theme === Theme.System) {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const systemThemeListener = (event: MediaQueryListEvent) => {
+        handleThemeChange(event.matches);
+      };
+      handleThemeChange(mediaQuery.matches);
+      mediaQuery.addEventListener('change', systemThemeListener);
+      return () => mediaQuery.removeEventListener('change', systemThemeListener);
+    } 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, loading]);
 
@@ -413,18 +435,25 @@ const Game = ({ socket }: { socket: Socket }) => {
       )}
       <ButtonGroup className="theme-selector">
         <Button 
-          variant={gameState.theme}
+          variant={themeButtonVariant}
           active={gameState.theme === Theme.Light}
           onClick={() => changeTheme(Theme.Light)}
         >
           Light Mode
         </Button>
         <Button 
-          variant={gameState.theme} 
+          variant={themeButtonVariant} 
           active={gameState.theme === Theme.Dark}
           onClick={() => changeTheme(Theme.Dark)}
         >
           Dark Mode
+        </Button>
+        <Button 
+          variant={themeButtonVariant} 
+          active={gameState.theme === Theme.System}
+          onClick={() => changeTheme(Theme.System)}
+        >
+          Follow System
         </Button>
       </ButtonGroup>
       {currentUser && (
