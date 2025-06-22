@@ -268,9 +268,9 @@ export const handleGameResult = (
   let nextPlayerValidatedMoves: number[] = [];
   const turn = gameState.turn === "white" ? "black" : "white";
   const player = gameState.turn === "white" ? Player.Black : Player.White;
-  const isPormotion = gameState.currentPlayerAction === PlayerAction.SELECT_PROMOTION_PIECE;
-  const newBoard = isPormotion ? newSquares : squares;
-  const newTargetPosition = isPormotion ? gameState.convertPawnPosition : targetPosition;
+  const isPromotion = gameState.currentPlayerAction === PlayerAction.SELECT_PROMOTION_PIECE;
+  const newBoard = isPromotion ? newSquares : squares;
+  const newTargetPosition = isPromotion ? gameState.convertPawnPosition : targetPosition;
 
   for (let i = 0; i < newBoard.length; i++) {
     if (newBoard[i] !== null) {
@@ -412,12 +412,12 @@ export const handleGameResult = (
   const move = convertMoveToNotation(
     gameState.sourceSelection, 
     newTargetPosition, 
-    isPormotion ? gameState.promotionOldBoard : board, 
+    isPromotion ? gameState.promotionOldBoard : board, 
     isEnpassantPossible, 
     gameState.turn, 
     nextPlayerValidatedMoves, 
     newBoard,
-    isPormotion
+    isPromotion
   );
   dispatchGameAction(["updateNotation", move]);
   if (!gameState.offlineMode) {
