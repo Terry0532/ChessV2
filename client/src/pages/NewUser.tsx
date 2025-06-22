@@ -8,6 +8,7 @@ import { db } from '../firebase/config';
 import { getButtonVariant } from '../helpers/chessGameLogic';
 import { ReactSVG } from 'react-svg';
 import LoadingIcon from '../icons/bouncing-circles.svg';
+import { isValidEmail } from '../helpers/utils';
 
 type NewUserProps = {
   socket: any;
@@ -147,7 +148,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
         </div>
       )}
       {gameMode === GameMode.Online && (
-        <>
+        <div>
           <Form onSubmit={(e) => handleAuth(e, false)} data-testid="enter-username-form">
             <Form.Group >
               <Form.Group>
@@ -159,7 +160,11 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
                   placeholder="Enter email"
                   required
                   data-bs-theme={theme}
+                  isInvalid={email.length > 0 && !isValidEmail(email)}
                 />
+                <Form.Control.Feedback type="invalid">
+                  Please enter a valid email address.
+                </Form.Control.Feedback>
               </Form.Group>
               <Form.Group style={{ marginTop: 5 }}>
                 <Form.Label className={theme}>Password</Form.Label>
@@ -191,7 +196,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
                       type="submit"
                       data-testid="submit-username-button"
                       style={{ marginTop: 5 }}
-                      disabled={isLoading}
+                      disabled={isLoading || !isValidEmail(email)}
                     >
                       {buttonText("Submit")}
                     </Button>
@@ -204,7 +209,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
                       variant={getButtonVariant(theme)}
                       type="submit"
                       data-testid="submit-username-button"
-                      disabled={isLoading}
+                      disabled={isLoading  || !isValidEmail(email)}
                     >
                       {buttonText("Log in")}
                     </Button>
@@ -236,7 +241,7 @@ const NewUser: React.FC<NewUserProps> = ({ socket, registrationConfirmation, sta
           >
             {buttonText("Log in with google")}
           </Button>
-        </>
+        </div>
       )}
     </div>
   );
