@@ -256,6 +256,10 @@ export const createSocketEventHandlers = ({
     console.log('Disconnected from server:', reason);
   };
 
+  const updateNotation = (data: any) => {
+    dispatchGameAction(["updateNotation", data.move]);
+  };
+
   const setupEventListeners = () => {
     socket.on("connected", onConnect);
     socket.on("updateGameData", updateGameData);
@@ -265,6 +269,7 @@ export const createSocketEventHandlers = ({
     socket.on("drawButton", drawButton);
     socket.on("toLobby", toLobby);
     socket.on("disconnect", onDisconnect);
+    socket.on("updateNotation", updateNotation);
   };
 
   const cleanupEventListeners = () => {
@@ -276,6 +281,7 @@ export const createSocketEventHandlers = ({
     socket.off("drawButton", drawButton);
     socket.off("toLobby", toLobby);
     socket.off("disconnect", onDisconnect);
+    socket.off("updateNotation", onDisconnect);
   };
 
   return { setupEventListeners, cleanupEventListeners };

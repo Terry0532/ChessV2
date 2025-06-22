@@ -191,7 +191,6 @@ module.exports = (io) => {
         const previousGameData = gameSnap.val();
   
         if (previousGameData) {
-          console.log("save game");
           await admin.firestore().collection('archivedGames').doc(data.gameId).set({
             whitePlayer: previousGameData.whitePlayer,
             blackPlayer: previousGameData.blackPlayer,
@@ -306,6 +305,17 @@ module.exports = (io) => {
     });
 
     client.on("updateNotation", async (data) => {
+      const gameData = await getGameData(data.gameId);
+        
+      if (!gameData) {
+        console.error('Game not found:', data.gameId);
+        // client.emit('error', { message: 'Game not found' });
+        return;
+      }
+      
+      const opponentId = data.userId === gameData.player1 ? gameData.player2 : gameData.player1;
+      io.to(opponentId).emit("updateNotation", { move: data.move });
+
       try {
         await admin.database().ref(`liveGames/${data.gameId}/moves`).push(data.move);
         
