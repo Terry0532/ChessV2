@@ -21,8 +21,6 @@ export const canEnpassant = (
 };
 
 export const dehighlight = (squares: any[], highLightMoves: number[]) => {
-  console.log(squares)
-  console.log(highLightMoves)
   for (let index = 0; index < highLightMoves.length; index++) {
     const element = highLightMoves[index];
 
