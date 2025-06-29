@@ -1,3 +1,7 @@
+import Bishop from "../pieces/bishop";
+import Knight from "../pieces/knight";
+import Queen from "../pieces/queen";
+import Rook from "../pieces/rook";
 import { convertMoveToNotation } from "./convertMoveToNotation";
 import { ChessPiece, GameAction, GameState, Player, PlayerAction, Theme } from "./types";
 
@@ -376,7 +380,7 @@ export const handleGameResult = (
 
     //king and bishop versus king, king and knight versus king draw
     if (
-      (blackRemainingPieces === 2 && whiteRemainingPieces === 1) 
+      (blackRemainingPieces === 2 && whiteRemainingPieces === 1)
       || (blackRemainingPieces === 1 && whiteRemainingPieces === 2)
     ) {
       let temp: boolean = false;
@@ -410,12 +414,12 @@ export const handleGameResult = (
   }
 
   const move = convertMoveToNotation(
-    gameState.sourceSelection, 
-    newTargetPosition, 
-    isPromotion ? gameState.promotionOldBoard : board, 
-    isEnpassantPossible, 
-    gameState.turn, 
-    nextPlayerValidatedMoves, 
+    gameState.sourceSelection,
+    newTargetPosition,
+    isPromotion ? gameState.promotionOldBoard : board,
+    isEnpassantPossible,
+    gameState.turn,
+    nextPlayerValidatedMoves,
     newBoard,
     isPromotion
   );
@@ -429,4 +433,235 @@ export const handleGameResult = (
     }
     dispatchGameAction(["updateMoves", [...gameState.moves, move]]);
   }
+};
+
+export const executeMove = async (
+  gameState: GameState, squares: any, dispatchGameAction: React.Dispatch<GameAction>,
+  targetPosition: number, whiteRemainingPieces: number, blackRemainingPieces: number,
+  emitGameEvent: (event: string, data?: any) => void, board: any
+): Promise<[any, boolean, number, number]> => {
+  //dehighlight selected piece
+  squares[gameState.sourceSelection].setBackgroundColor("");
+
+  const whiteFallenSoldiers = gameState.whiteFallenSoldiers;
+  const blackFallenSoldiers = gameState.blackFallenSoldiers;
+
+  let isEnpassantPossible: boolean;
+
+  if (squares[gameState.sourceSelection].name === ChessPiece.Pawn) {
+    squares = dehighlight(squares, gameState.highLightMoves);
+    isEnpassantPossible = canEnpassant(
+      gameState.sourceSelection, gameState.lastTurnPawnPosition, gameState.firstMove
+    );
+
+    if (gameState.highLightMoves.includes(targetPosition)) {
+      //if en passant is available and player decided to use it, else proceed without it
+      if (
+        isEnpassantPossible
+        && squares[targetPosition] == null
+        && (
+          gameState.lastTurnPawnPosition - 8 === targetPosition || gameState.lastTurnPawnPosition + 8 === targetPosition
+        )
+      ) {
+        //add captured piece to fallen soldier list
+        if (squares[gameState.lastTurnPawnPosition].player === Player.White) {
+          whiteFallenSoldiers.push(
+            squares[gameState.lastTurnPawnPosition]
+          );
+          whiteRemainingPieces -= 1;
+        }
+        else {
+          blackFallenSoldiers.push(
+            squares[gameState.lastTurnPawnPosition]
+          );
+          blackRemainingPieces -= 1;
+        }
+
+        //move player selected piece to target position
+        squares[targetPosition] = squares[gameState.sourceSelection];
+        squares[gameState.lastTurnPawnPosition] = null;
+        squares[gameState.sourceSelection] = null;
+
+        dispatchGameAction([
+          "enpassant",
+          { squares, whiteFallenSoldiers, blackFallenSoldiers, disabled: !gameState.offlineMode }
+        ]);
+
+        if (!gameState.offlineMode) {
+          emitGameEvent(
+            "moves",
+            { selectedPiece: gameState.sourceSelection, targetPosition }
+          );
+        }
+      }
+      else {
+        //check if current pawn is moving for the first time and moving 2 squares forward
+        let firstMove: boolean;
+        if (
+          (squares[gameState.sourceSelection].player === Player.White)
+          && (targetPosition === gameState.sourceSelection - 16)
+        ) {
+          firstMove = true;
+        }
+        else if (
+          (squares[gameState.sourceSelection].player === Player.Black)
+          && (targetPosition === gameState.sourceSelection + 16)
+        ) {
+          firstMove = true;
+        }
+
+        //update number of pieces
+        if (squares[targetPosition] !== null) {
+          if (gameState.turn === "white") {
+            blackRemainingPieces -= 1;
+          }
+          else {
+            whiteRemainingPieces -= 1;
+          }
+        }
+        addToFallenSoldierList(
+          targetPosition, squares, whiteFallenSoldiers, blackFallenSoldiers, dispatchGameAction
+        );
+        squares = movePiece(targetPosition, squares, gameState.sourceSelection);
+
+        //to convert pawn that reach other side of the chess board
+        if ([0, 1, 2, 3, 4, 5, 6, 7, 56, 57, 58, 59, 60, 61, 62, 63].includes(targetPosition)) {
+          const tempSquares = squares.concat();
+
+          //give player choice to convert their pawn and highlight those choices
+          if (gameState.turn === "white") {
+            tempSquares[10] = new Knight(Player.White).setBackgroundColor();
+            tempSquares[11] = new Bishop(Player.White).setBackgroundColor();
+            tempSquares[12] = new Rook(Player.White).setBackgroundColor();
+            tempSquares[13] = new Queen(Player.White).setBackgroundColor();
+          }
+          else if (gameState.turn === "black") {
+            tempSquares[50] = new Knight(Player.Black).setBackgroundColor();
+            tempSquares[51] = new Bishop(Player.Black).setBackgroundColor();
+            tempSquares[52] = new Rook(Player.Black).setBackgroundColor();
+            tempSquares[53] = new Queen(Player.Black).setBackgroundColor();
+          }
+
+          //update chess board with convert choices and save chess board without choices in this.state.tempSquares
+          dispatchGameAction([
+            "updateBoard",
+            { squares, tempSquares, i: targetPosition, selectedPawnPosition: gameState.sourceSelection, board }
+          ]);
+          return;
+        }
+        else {
+          dispatchGameAction([
+            "moves", { squares, firstMove, lastTurnPawnPosition: targetPosition, disabled: !gameState.offlineMode }
+          ]);
+
+          if (!gameState.offlineMode) {
+            emitGameEvent(
+              "moves",
+              { selectedPiece: gameState.sourceSelection, targetPosition }
+            );
+          }
+        }
+      }
+    }
+    else {
+      dispatchGameAction(["wrongMove", squares]);
+      return;
+    }
+  }
+  else if (squares[gameState.sourceSelection].name === ChessPiece.King) {
+    squares = dehighlight(squares, gameState.highLightMoves);
+    //for castling
+    if (
+      gameState.highLightMoves.includes(targetPosition)
+      && (targetPosition === 2 || targetPosition === 6 || targetPosition === 58 || targetPosition === 62)
+      && (gameState.whiteKingFirstMove || gameState.blackKingFirstMove)
+    ) {
+      if (targetPosition === 58) {
+        squares = movePiece(targetPosition, squares, gameState.sourceSelection);
+        squares = movePiece(59, squares, 56);
+      }
+      if (targetPosition === 62) {
+        squares = movePiece(targetPosition, squares, gameState.sourceSelection);
+        squares = movePiece(61, squares, 63);
+      }
+      if (targetPosition === 2) {
+        squares = movePiece(targetPosition, squares, gameState.sourceSelection);
+        squares = movePiece(3, squares, 0);
+      }
+      if (targetPosition === 6) {
+        squares = movePiece(targetPosition, squares, gameState.sourceSelection);
+        squares = movePiece(5, squares, 7);
+      }
+
+      //to record king has been moved or not. for castle
+      dispatchGameAction(["moveKing", { i: targetPosition, squares, disabled: !gameState.offlineMode }]);
+
+      if (!gameState.offlineMode) {
+        emitGameEvent(
+          "moves",
+          { selectedPiece: gameState.sourceSelection, targetPosition }
+        );
+      }
+    }
+    else if (gameState.highLightMoves.includes(targetPosition)) {
+      //update number of pieces
+      if (squares[targetPosition] !== null) {
+        if (gameState.turn === "white") {
+          blackRemainingPieces -= 1;
+        }
+        else {
+          whiteRemainingPieces -= 1;
+        }
+      }
+      addToFallenSoldierList(
+        targetPosition, squares, whiteFallenSoldiers, blackFallenSoldiers, dispatchGameAction
+      );
+      squares = movePiece(targetPosition, squares, gameState.sourceSelection);
+
+      //to record king has been moved or not. for castle
+      dispatchGameAction(["moveKing", { i: targetPosition, squares, disabled: !gameState.offlineMode }]);
+
+      if (!gameState.offlineMode) {
+        emitGameEvent(
+          "moves",
+          { selectedPiece: gameState.sourceSelection, targetPosition }
+        );
+      }
+    } else {
+      dispatchGameAction(["wrongMove", squares]);
+      return;
+    }
+  }
+  else {
+    squares = dehighlight(squares, gameState.highLightMoves);
+    if (gameState.highLightMoves.includes(targetPosition)) {
+      //update number of pieces
+      if (squares[targetPosition] !== null) {
+        if (gameState.turn === "white") {
+          blackRemainingPieces -= 1;
+        } else {
+          whiteRemainingPieces -= 1;
+        }
+      }
+      addToFallenSoldierList(
+        targetPosition, squares, whiteFallenSoldiers, blackFallenSoldiers, dispatchGameAction
+      );
+      squares = movePiece(targetPosition, squares, gameState.sourceSelection);
+
+      dispatchGameAction(["moveRook", { i: targetPosition, squares, disabled: !gameState.offlineMode }]);
+
+      if (!gameState.offlineMode) {
+        emitGameEvent(
+          "moves",
+          { selectedPiece: gameState.sourceSelection, targetPosition }
+        );
+      }
+    } else {
+      dispatchGameAction(["wrongMove", squares]);
+      return;
+    }
+  }
+
+  dispatchGameAction(["updatePieces", { whiteRemainingPieces, blackRemainingPieces }]);
+  return [squares, isEnpassantPossible, whiteRemainingPieces, blackRemainingPieces];
 };

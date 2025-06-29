@@ -1,6 +1,7 @@
 import React from 'react';
 import '../index.css';
 import { Theme } from '../helpers/types';
+import AnimatedPiece from './AnimatedPiece';
 
 type BoardProps = {
   squares: any;
@@ -8,20 +9,33 @@ type BoardProps = {
   disabled: boolean;
   rotateBoard: string;
   theme: Theme;
+  animatingMove?: { from: number; to: number; piece: any } | null;
+  onAnimationComplete?: () => void;
 };
 
-const Board: React.FC<BoardProps> = ({ squares, onClick, disabled, rotateBoard, theme }) => {
+const Board: React.FC<BoardProps> = ({ 
+  squares, 
+  onClick, 
+  disabled, 
+  rotateBoard, 
+  theme,
+  animatingMove,
+  onAnimationComplete
+}) => {
   const isEven = (num: number) => {
     return num % 2 === 0;
   };
 
   const renderSquare = (i: number, squareShade: string) => {
+    const shouldHidePiece = animatingMove && (i === animatingMove.from || i === animatingMove.to);
+    const squareStyle = shouldHidePiece ? null : (squares[i] ? squares[i].style : null);
+    
     return (
       <div key={i} className="button">
         <button
           className={"square " + squareShade + " " + rotateBoard}
           onClick={() => onClick(i)}
-          style={squares[i] ? squares[i].style : null}
+          style={squareStyle}
           disabled={disabled}
           data-testid={"board-square-" + i}
         ></button>
@@ -43,6 +57,16 @@ const Board: React.FC<BoardProps> = ({ squares, onClick, disabled, rotateBoard, 
   return (
     <div data-testid="board-container" className={rotateBoard}>
       {board}
+      {animatingMove && (
+        <AnimatedPiece
+          piece={animatingMove.piece}
+          fromPosition={animatingMove.from}
+          toPosition={animatingMove.to}
+          onAnimationComplete={onAnimationComplete}
+          boardSize={8}
+          squareSize={48}
+        />
+      )}
     </div>
   );
 };
