@@ -27,8 +27,9 @@ const Board: React.FC<BoardProps> = ({
   };
 
   const renderSquare = (i: number, squareShade: string) => {
-    const shouldHidePiece = animatingMove && (i === animatingMove.from || i === animatingMove.to);
-    const squareStyle = shouldHidePiece ? null : (squares[i] ? squares[i].style : null);
+    const squareStyle = animatingMove && (i === animatingMove.from) 
+      ? { ...squares[i].style, backgroundImage: 'none' } 
+      : (squares[i] ? squares[i].style : null);
     
     return (
       <div key={i} className="button">
