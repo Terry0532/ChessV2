@@ -9,7 +9,7 @@ import { Socket } from "socket.io-client";
 import { Button, ButtonGroup } from "react-bootstrap";
 import { useAuth } from "../firebase/AuthContext";
 import { signOutUser } from "../firebase/auth";
-import { executeMove, handleGameResult, handlePieceSelection } from "../helpers/chessGameLogic";
+import { dehighlight, executeMove, handleGameResult, handlePieceSelection } from "../helpers/chessGameLogic";
 import GameInfo from "../components/GameInfo";
 import { createSocketEventHandlers } from "../helpers/socketEventHandlers";
 import ChessIconsCredit from "../components/ChessIconsCredit";
@@ -40,12 +40,21 @@ const Game = ({ socket }: { socket: Socket }) => {
       handlePieceSelection(targetPosition, gameState, dispatchGameAction, squares);
     } 
     else if (gameState.currentPlayerAction === PlayerAction.EXECUTE_MOVE) {
-      setAnimatingMove({
-        from: gameState.sourceSelection,
-        to: targetPosition,
-        piece: squares[gameState.sourceSelection]
-      });
-      return;
+      if (gameState.highLightMoves.includes(targetPosition)) {
+        setAnimatingMove({
+          from: gameState.sourceSelection,
+          to: targetPosition,
+          piece: squares[gameState.sourceSelection]
+        });
+        return;
+      } 
+      else {
+        squares = dehighlight(
+          gameState.squares.concat(), gameState.highLightMoves.concat(gameState.sourceSelection)
+        );
+        dispatchGameAction(["wrongMove", squares]);
+        return;
+      }
     }
     else if (gameState.currentPlayerAction === PlayerAction.SELECT_PROMOTION_PIECE) {
       //to convert pawn that reach other side of the chess board
