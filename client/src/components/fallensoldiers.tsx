@@ -6,8 +6,9 @@ type FallenSoldierBlockProps = {
   blackFallenSoldiers: any[];
 };
 
-const FallenSoldierBlock: React.FC<FallenSoldierBlockProps> = ({ 
-  whiteFallenSoldiers, blackFallenSoldiers 
+const FallenSoldierBlock: React.FC<FallenSoldierBlockProps> = ({
+  whiteFallenSoldiers,
+  blackFallenSoldiers,
 }) => {
   const renderSquare = ({ style: { backgroundImage } }, index: number) => (
     <button
@@ -17,7 +18,7 @@ const FallenSoldierBlock: React.FC<FallenSoldierBlockProps> = ({
       style={{ backgroundImage, borderColor: "transparent" }}
     />
   );
-  
+
   return (
     <div>
       {[whiteFallenSoldiers, blackFallenSoldiers].map((soldiers, rowIndex) => (
@@ -26,7 +27,7 @@ const FallenSoldierBlock: React.FC<FallenSoldierBlockProps> = ({
         </div>
       ))}
     </div>
-  );  
-}
+  );
+};
 
 export default FallenSoldierBlock;

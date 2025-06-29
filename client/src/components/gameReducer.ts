@@ -1,5 +1,12 @@
 import initialiseChessBoard from "../helpers/initialiseChessBoard";
-import { ChessPiece, GameAction, GameState, Player, PlayerAction, Theme } from "../helpers/types";
+import {
+  ChessPiece,
+  GameAction,
+  GameState,
+  Player,
+  PlayerAction,
+  Theme,
+} from "../helpers/types";
 
 export const initialGameState: GameState = {
   squares: initialiseChessBoard(),
@@ -48,7 +55,7 @@ export const initialGameState: GameState = {
   promotionOldBoard: [],
   theme: Theme.Light,
   suggestion: "",
-  moves: []
+  moves: [],
 };
 
 export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
@@ -82,7 +89,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         status: newValue,
         hideButton: "",
         hideResignButton: "none",
-        hideDrawButton: "none"
+        hideDrawButton: "none",
       };
 
     case "continueGame":
@@ -91,7 +98,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         newGameButton: "Yes",
         leaveButton: "No",
         status: "Do you want to play again?",
-        continueGame: true
+        continueGame: true,
       };
 
     case "nextGameData":
@@ -131,7 +138,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         hideResignButton: "",
         hideDrawButton: "",
         notation: "",
-        promotionOldBoard: []
+        promotionOldBoard: [],
       };
 
     case "newGame":
@@ -147,17 +154,17 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         status: "Choose destination for the selected piece",
         sourceSelection: newValue.i,
         currentPlayerAction: PlayerAction.EXECUTE_MOVE,
-        highLightMoves: newValue.highLightMoves
+        highLightMoves: newValue.highLightMoves,
       };
 
     case "convertPawn":
-      return { 
-        ...changeTurn(gameState), 
-        status: "", 
-        convertPawnPosition: undefined, 
+      return {
+        ...changeTurn(gameState),
+        status: "",
+        convertPawnPosition: undefined,
         currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue.squares,
-        disabled: newValue.disabled
+        disabled: newValue.disabled,
       };
 
     case "wrongMove":
@@ -166,7 +173,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         status: "Wrong selection. Choose valid source and destination again.",
         currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue,
-        highLightMoves: []
+        highLightMoves: [],
       };
 
     case "enpassant":
@@ -178,7 +185,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         squares: newValue.squares,
         whiteFallenSoldiers: newValue.whiteFallenSoldiers,
         blackFallenSoldiers: newValue.blackFallenSoldiers,
-        disabled: newValue.disabled
+        disabled: newValue.disabled,
       };
 
     case "moves":
@@ -190,17 +197,17 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         squares: newValue.squares,
         firstMove: newValue.firstMove,
         lastTurnPawnPosition: newValue.lastTurnPawnPosition,
-        disabled: newValue.disabled
+        disabled: newValue.disabled,
       };
 
     case "addToFallenSoldierList":
       return {
         ...gameState,
         whiteFallenSoldiers: newValue.whiteFallenSoldiers,
-        blackFallenSoldiers: newValue.blackFallenSoldiers
+        blackFallenSoldiers: newValue.blackFallenSoldiers,
       };
 
-    case "updateBoard"://only used for update board with promotion choice
+    case "updateBoard": //only used for update board with promotion choice
       return {
         ...gameState,
         sourceSelection: newValue.selectedPawnPosition,
@@ -210,7 +217,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         tempSquares: newValue.squares,
         squares: newValue.tempSquares,
         convertPawnPosition: newValue.i,
-        promotionOldBoard: newValue.board
+        promotionOldBoard: newValue.board,
       };
 
     case "moveKing":
@@ -224,7 +231,12 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         status: "",
         highLightMoves: [],
         disabled: newValue.disabled,
-        ...updateKingPosition(gameState, gameState.sourceSelection, isWhitePlayer, newValue.i)
+        ...updateKingPosition(
+          gameState,
+          gameState.sourceSelection,
+          isWhitePlayer,
+          newValue.i
+        ),
       };
 
     case "moveRook":
@@ -232,17 +244,15 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
 
       return {
         ...changeTurn(gameState),
-        ...(
-          newValue.squares[newValue.i].name === ChessPiece.Rook
-            ? updateRookMoveStatus(gameState, gameState.sourceSelection, isWhitePlayer) 
-            : {}
-        ),
+        ...(newValue.squares[newValue.i].name === ChessPiece.Rook
+          ? updateRookMoveStatus(gameState, gameState.sourceSelection, isWhitePlayer)
+          : {}),
         sourceSelection: -1,
         currentPlayerAction: PlayerAction.SELECT_PIECE,
         squares: newValue.squares,
         status: "",
         highLightMoves: [],
-        disabled: newValue.disabled
+        disabled: newValue.disabled,
       };
 
     case "gameResult":
@@ -252,14 +262,14 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         status: newValue,
         hideButton: "",
         hideResignButton: "none",
-        hideDrawButton: "none"
+        hideDrawButton: "none",
       };
 
     case "updatePieces":
       return {
         ...gameState,
         whiteRemainingPieces: newValue.whiteRemainingPieces,
-        blackRemainingPieces: newValue.blackRemainingPieces
+        blackRemainingPieces: newValue.blackRemainingPieces,
       };
 
     case "registrationConfirmation":
@@ -284,7 +294,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         gameId: newValue.game_id,
         gameData: newValue.game_data,
         disabled,
-        rotateBoard
+        rotateBoard,
       };
 
     case "movePiece":
@@ -293,29 +303,42 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
       const castling = {
         58: { rookSource: 56, rookTarget: 59 },
         62: { rookSource: 63, rookTarget: 61 },
-        2:  { rookSource: 0,  rookTarget: 3  },
-        6:  { rookSource: 7,  rookTarget: 5  },
+        2: { rookSource: 0, rookTarget: 3 },
+        6: { rookSource: 7, rookTarget: 5 },
       };
 
       if (newValue.piece === ChessPiece.Pawn && newValue.canEnpassant) {
         squares[newValue.targetPosition] = squares[newValue.selectedPiece];
         squares[gameState.lastTurnPawnPosition] = null;
         squares[newValue.selectedPiece] = null;
-      }
-      else if (newValue.piece === ChessPiece.King && newValue.castle) {
+      } else if (newValue.piece === ChessPiece.King && newValue.castle) {
         if (castling.hasOwnProperty(newValue.targetPosition)) {
           const castlingData = castling[newValue.targetPosition];
-          squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
-          squares = movePiece(castlingData.rookTarget, squares, castlingData.rookSource);
+          squares = movePiece(
+            newValue.targetPosition,
+            squares,
+            newValue.selectedPiece
+          );
+          squares = movePiece(
+            castlingData.rookTarget,
+            squares,
+            castlingData.rookSource
+          );
         }
-      }
-      else if (newValue.piece === ChessPiece.Promotion) {
-        squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
+      } else if (newValue.piece === ChessPiece.Promotion) {
+        squares = movePiece(
+          newValue.targetPosition,
+          squares,
+          newValue.selectedPiece
+        );
         squares[newValue.targetPosition] = newValue.promotionPiece;
         squares[newValue.selectedPiece] = null;
-      }
-      else {
-        squares = movePiece(newValue.targetPosition, squares, newValue.selectedPiece);
+      } else {
+        squares = movePiece(
+          newValue.targetPosition,
+          squares,
+          newValue.selectedPiece
+        );
       }
 
       isWhitePlayer = squares[newValue.targetPosition].player === Player.White;
@@ -333,18 +356,17 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         lastTurnPawnPosition: newValue.lastTurnPawnPosition,
         whiteRemainingPieces: newValue.whiteRemainingPieces,
         blackRemainingPieces: newValue.blackRemainingPieces,
-        ...(
-          newValue.piece === ChessPiece.Rook
-            ? updateRookMoveStatus(gameState, newValue.selectedPiece, isWhitePlayer)
-            : {}
-        ),
-        ...(
-          newValue.piece === ChessPiece.King
-            ? updateKingPosition(
-              gameState, newValue.selectedPiece, isWhitePlayer, newValue.targetPosition
+        ...(newValue.piece === ChessPiece.Rook
+          ? updateRookMoveStatus(gameState, newValue.selectedPiece, isWhitePlayer)
+          : {}),
+        ...(newValue.piece === ChessPiece.King
+          ? updateKingPosition(
+              gameState,
+              newValue.selectedPiece,
+              isWhitePlayer,
+              newValue.targetPosition
             )
-            : {}
-        )
+          : {}),
       };
 
     case "toLobby":
@@ -385,7 +407,7 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
         hideResignButton: "",
         hideDrawButton: "",
         notation: "",
-        promotionOldBoard: []
+        promotionOldBoard: [],
       };
 
     case "startOfflineGame":
@@ -403,7 +425,7 @@ const changeTurn = (gameState: GameState) => {
   return {
     ...gameState,
     player: gameState.player === 1 ? 2 : 1,
-    turn: gameState.turn === "white" ? "black" : "white"
+    turn: gameState.turn === "white" ? "black" : "white",
   };
 };
 
@@ -411,39 +433,50 @@ const movePiece = (i: number, squares: any[], sourceSelection: number) => {
   squares[i] = squares[sourceSelection];
   squares[sourceSelection] = null;
   return squares;
-}
+};
 
 //to record if rook has been moved or not. for castle.
-const updateRookMoveStatus = (gameState: GameState, selectedPiece: number, isWhitePlayer: boolean) => {
+const updateRookMoveStatus = (
+  gameState: GameState,
+  selectedPiece: number,
+  isWhitePlayer: boolean
+) => {
   return {
-    whiteRookFirstMoveLeft: selectedPiece === 56 && isWhitePlayer
-      ? false
-      : gameState.whiteRookFirstMoveLeft,
-    whiteRookFirstMoveRight: selectedPiece === 63 && isWhitePlayer
-      ? false
-      : gameState.whiteRookFirstMoveRight,
-    blackRookFirstMoveLeft: selectedPiece === 0 && !isWhitePlayer
-      ? false
-      : gameState.blackRookFirstMoveLeft,
-    blackRookFirstMoveRight: selectedPiece === 7 && !isWhitePlayer
-      ? false
-      : gameState.blackRookFirstMoveRight,
+    whiteRookFirstMoveLeft:
+      selectedPiece === 56 && isWhitePlayer
+        ? false
+        : gameState.whiteRookFirstMoveLeft,
+    whiteRookFirstMoveRight:
+      selectedPiece === 63 && isWhitePlayer
+        ? false
+        : gameState.whiteRookFirstMoveRight,
+    blackRookFirstMoveLeft:
+      selectedPiece === 0 && !isWhitePlayer
+        ? false
+        : gameState.blackRookFirstMoveLeft,
+    blackRookFirstMoveRight:
+      selectedPiece === 7 && !isWhitePlayer
+        ? false
+        : gameState.blackRookFirstMoveRight,
   };
 };
 
 const updateKingPosition = (
-  gameState: GameState, selectedPosition: number, isWhitePlayer: boolean, targetPosition: number
+  gameState: GameState,
+  selectedPosition: number,
+  isWhitePlayer: boolean,
+  targetPosition: number
 ) => {
   return {
-    whiteKingPosition: isWhitePlayer
-      ? targetPosition
-      : gameState.whiteKingPosition,
-    blackKingPosition: !isWhitePlayer
-      ? targetPosition
-      : gameState.blackKingPosition,
-    whiteKingFirstMove: selectedPosition === 60 && isWhitePlayer
-      ? false : gameState.whiteKingFirstMove,
-    blackKingFirstMove: selectedPosition === 4 && !isWhitePlayer
-      ? false : gameState.blackKingFirstMove,
+    whiteKingPosition: isWhitePlayer ? targetPosition : gameState.whiteKingPosition,
+    blackKingPosition: !isWhitePlayer ? targetPosition : gameState.blackKingPosition,
+    whiteKingFirstMove:
+      selectedPosition === 60 && isWhitePlayer
+        ? false
+        : gameState.whiteKingFirstMove,
+    blackKingFirstMove:
+      selectedPosition === 4 && !isWhitePlayer
+        ? false
+        : gameState.blackKingFirstMove,
   };
 };

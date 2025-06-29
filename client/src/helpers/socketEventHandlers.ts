@@ -1,6 +1,6 @@
-import { Socket } from 'socket.io-client';
-import { ChessPiece, GameAction, Player } from './types';
-import { canEnpassant } from './chessGameLogic';
+import { Socket } from "socket.io-client";
+import { ChessPiece, GameAction, Player } from "./types";
+import { canEnpassant } from "./chessGameLogic";
 
 interface SocketEventHandlersProps {
   socket: Socket;
@@ -17,7 +17,7 @@ export const createSocketEventHandlers = ({
   gameState,
   currentUser,
   updateSocketId,
-  emitGameEvent
+  emitGameEvent,
 }: SocketEventHandlersProps) => {
   const onConnect = (data: any) => {
     if (currentUser && data && data.id) {
@@ -32,12 +32,12 @@ export const createSocketEventHandlers = ({
 
   const nextGameData = (data: any) => {
     dispatchGameAction([
-      "nextGameData", 
+      "nextGameData",
       {
         rotateBoard: data.game_data.whose_turn !== gameState.userId ? "rotate" : "",
         gameId: data.game_id,
-        gameData: data.game_data
-      }
+        gameData: data.game_data,
+      },
     ]);
   };
 
@@ -69,32 +69,31 @@ export const createSocketEventHandlers = ({
 
       dispatchGameAction([
         "movePiece",
-        { 
-          squares, 
-          whiteFallenSoldiers, 
-          blackFallenSoldiers, 
-          whiteRemainingPieces, 
+        {
+          squares,
+          whiteFallenSoldiers,
+          blackFallenSoldiers,
+          whiteRemainingPieces,
           blackRemainingPieces,
           disabled: false,
           piece: ChessPiece.Promotion,
           targetPosition,
           selectedPiece,
-          promotionPiece
-        }
+          promotionPiece,
+        },
       ]);
-    }
-    else if (squares[selectedPiece].name === ChessPiece.Pawn) {
+    } else if (squares[selectedPiece].name === ChessPiece.Pawn) {
       const isEnpassantPossible = canEnpassant(
-        selectedPiece, gameState.lastTurnPawnPosition, gameState.firstMove
+        selectedPiece,
+        gameState.lastTurnPawnPosition,
+        gameState.firstMove
       );
 
       if (
-        isEnpassantPossible
-        && squares[targetPosition] === null 
-        && (
-          gameState.lastTurnPawnPosition - 8 === targetPosition 
-          || gameState.lastTurnPawnPosition + 8 === targetPosition
-        )
+        isEnpassantPossible &&
+        squares[targetPosition] === null &&
+        (gameState.lastTurnPawnPosition - 8 === targetPosition ||
+          gameState.lastTurnPawnPosition + 8 === targetPosition)
       ) {
         if (squares[gameState.lastTurnPawnPosition].player === Player.White) {
           whiteFallenSoldiers.push(squares[gameState.lastTurnPawnPosition]);
@@ -106,31 +105,29 @@ export const createSocketEventHandlers = ({
 
         dispatchGameAction([
           "movePiece",
-          { 
-            squares, 
-            whiteFallenSoldiers, 
-            blackFallenSoldiers, 
-            whiteRemainingPieces, 
+          {
+            squares,
+            whiteFallenSoldiers,
+            blackFallenSoldiers,
+            whiteRemainingPieces,
             blackRemainingPieces,
             disabled: false,
             piece: ChessPiece.Pawn,
             selectedPiece,
             canEnpassant: isEnpassantPossible,
-            targetPosition
-          }
+            targetPosition,
+          },
         ]);
-      } 
-      else {
+      } else {
         let firstMove: boolean;
         if (
-          squares[selectedPiece].player === Player.White
-          && targetPosition === selectedPiece - 16
+          squares[selectedPiece].player === Player.White &&
+          targetPosition === selectedPiece - 16
         ) {
           firstMove = true;
-        } 
-        else if (
-          squares[selectedPiece].player === Player.Black
-          && targetPosition === selectedPiece + 16
+        } else if (
+          squares[selectedPiece].player === Player.Black &&
+          targetPosition === selectedPiece + 16
         ) {
           firstMove = true;
         }
@@ -149,51 +146,51 @@ export const createSocketEventHandlers = ({
 
         dispatchGameAction([
           "movePiece",
-          { 
-            squares, 
-            whiteFallenSoldiers, 
-            blackFallenSoldiers, 
-            whiteRemainingPieces, 
+          {
+            squares,
+            whiteFallenSoldiers,
+            blackFallenSoldiers,
+            whiteRemainingPieces,
             blackRemainingPieces,
             disabled: false,
             firstMove,
             lastTurnPawnPosition,
             piece: ChessPiece.Pawn,
             selectedPiece,
-            targetPosition
-          }
+            targetPosition,
+          },
         ]);
       }
-    }
-    else if (squares[selectedPiece].name === ChessPiece.King) {
+    } else if (squares[selectedPiece].name === ChessPiece.King) {
       //for castling
       if (
-        (targetPosition === 2 || targetPosition === 6 || targetPosition === 58 || targetPosition === 62) 
-        && (gameState.whiteKingFirstMove || gameState.blackKingFirstMove)
+        (targetPosition === 2 ||
+          targetPosition === 6 ||
+          targetPosition === 58 ||
+          targetPosition === 62) &&
+        (gameState.whiteKingFirstMove || gameState.blackKingFirstMove)
       ) {
         dispatchGameAction([
           "movePiece",
-          { 
-            squares, 
-            whiteFallenSoldiers, 
-            blackFallenSoldiers, 
-            whiteRemainingPieces, 
+          {
+            squares,
+            whiteFallenSoldiers,
+            blackFallenSoldiers,
+            whiteRemainingPieces,
             blackRemainingPieces,
             disabled: false,
             piece: ChessPiece.King,
             targetPosition,
             selectedPiece,
-            castle: true
-          }
+            castle: true,
+          },
         ]);
-      }
-      else {
+      } else {
         if (squares[targetPosition] !== null) {
           if (gameState.turn === "white") {
             blackFallenSoldiers.push(squares[targetPosition]);
             blackRemainingPieces -= 1;
-          } 
-          else {
+          } else {
             whiteFallenSoldiers.push(squares[targetPosition]);
             whiteRemainingPieces -= 1;
           }
@@ -201,21 +198,20 @@ export const createSocketEventHandlers = ({
 
         dispatchGameAction([
           "movePiece",
-          { 
-            squares, 
-            whiteFallenSoldiers, 
-            blackFallenSoldiers, 
-            whiteRemainingPieces, 
+          {
+            squares,
+            whiteFallenSoldiers,
+            blackFallenSoldiers,
+            whiteRemainingPieces,
             blackRemainingPieces,
             disabled: false,
             piece: ChessPiece.King,
             targetPosition,
-            selectedPiece
-          }
+            selectedPiece,
+          },
         ]);
       }
-    }
-    else {
+    } else {
       if (squares[targetPosition] !== null) {
         if (gameState.turn === "white") {
           blackFallenSoldiers.push(squares[targetPosition]);
@@ -228,17 +224,18 @@ export const createSocketEventHandlers = ({
 
       dispatchGameAction([
         "movePiece",
-        { 
-          squares, 
-          whiteFallenSoldiers, 
-          blackFallenSoldiers, 
-          whiteRemainingPieces, 
+        {
+          squares,
+          whiteFallenSoldiers,
+          blackFallenSoldiers,
+          whiteRemainingPieces,
           blackRemainingPieces,
           disabled: false,
-          piece: squares[selectedPiece].name === ChessPiece.Rook ? ChessPiece.Rook : null,
+          piece:
+            squares[selectedPiece].name === ChessPiece.Rook ? ChessPiece.Rook : null,
           targetPosition,
-          selectedPiece
-        }
+          selectedPiece,
+        },
       ]);
     }
   };
@@ -253,7 +250,7 @@ export const createSocketEventHandlers = ({
   };
 
   const onDisconnect = (reason: string) => {
-    console.log('Disconnected from server:', reason);
+    console.log("Disconnected from server:", reason);
   };
 
   const updateNotation = (data: any) => {

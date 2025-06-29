@@ -6,32 +6,38 @@ import {
   User,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile
-} from 'firebase/auth';
-import { auth, rtdb } from './config';
-import { ref, serverTimestamp, set } from 'firebase/database';
+  updateProfile,
+} from "firebase/auth";
+import { auth, rtdb } from "./config";
+import { ref, serverTimestamp, set } from "firebase/database";
 
 export const signInWithEmail = async (email: string, password: string) => {
   try {
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return { success: true, user: userCredential.user };
-  }
-  catch (error: any) {
+  } catch (error: any) {
     return { success: false, error: error.message };
   }
 };
 
-export const createUserWithEmail = async (email: string, password: string, displayName: string) => {
+export const createUserWithEmail = async (
+  email: string,
+  password: string,
+  displayName: string
+) => {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
 
     if (displayName) {
       await updateProfile(userCredential.user, { displayName });
     }
 
     return { success: true, user: userCredential.user };
-  }
-  catch (error: any) {
+  } catch (error: any) {
     return { success: false, error: error.message };
   }
 };
@@ -41,8 +47,7 @@ export const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
     return { success: true, user: userCredential.user };
-  }
-  catch (error: any) {
+  } catch (error: any) {
     return { success: false, error: error.message };
   }
 };
@@ -50,21 +55,20 @@ export const signInWithGoogle = async () => {
 export const signOutUser = async () => {
   try {
     const user = auth.currentUser;
-    
+
     if (user) {
       const userStatusRef = ref(rtdb, `status/${user.uid}`);
       await set(userStatusRef, {
-        state: 'offline',
+        state: "offline",
         displayName: user.displayName || user.email,
         lastChanged: serverTimestamp(),
-        socketId: null
+        socketId: null,
       });
     }
-    
+
     await signOut(auth);
     return { success: true };
-  }
-  catch (error: any) {
+  } catch (error: any) {
     return { success: false, error: error.message };
   }
 };

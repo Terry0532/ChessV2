@@ -115,7 +115,8 @@ h3 {
   margin-top: 20px;
 }
 
-.dark-mode, button.dark {
+.dark-mode,
+button.dark {
   background-color: #121212;
 }
 
@@ -131,6 +132,12 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-small.dark, h3.dark, .game-status.dark, p.dark, label.dark, h2.dark, button.dark {
+small.dark,
+h3.dark,
+.game-status.dark,
+p.dark,
+label.dark,
+h2.dark,
+button.dark {
   color: #e0e0e0;
 }

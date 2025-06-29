@@ -1,5 +1,5 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React from "react";
+import { motion } from "framer-motion";
 
 interface AnimatedPieceProps {
   piece: any;
@@ -16,14 +16,14 @@ const AnimatedPiece: React.FC<AnimatedPieceProps> = ({
   toPosition,
   onAnimationComplete,
   boardSize = 8,
-  squareSize = 48
+  squareSize = 48,
 }) => {
   const getCoordinates = (position: number) => {
     const row = Math.floor(position / boardSize);
     const col = position % boardSize;
     return {
       x: col * squareSize,
-      y: row * squareSize
+      y: row * squareSize,
     };
   };
 
@@ -34,29 +34,29 @@ const AnimatedPiece: React.FC<AnimatedPieceProps> = ({
     <motion.div
       className="animated-piece"
       style={{
-        position: 'fixed',
+        position: "fixed",
         width: squareSize,
         height: squareSize,
         backgroundImage: piece.style.backgroundImage,
-        backgroundSize: 'contain',
-        backgroundRepeat: 'no-repeat',
-        backgroundPosition: 'center',
+        backgroundSize: "contain",
+        backgroundRepeat: "no-repeat",
+        backgroundPosition: "center",
         zIndex: 9999,
-        pointerEvents: 'none',
+        pointerEvents: "none",
         top: 14,
         left: 15,
       }}
       initial={{
         x: fromCoords.x,
-        y: fromCoords.y
+        y: fromCoords.y,
       }}
       animate={{
         x: toCoords.x,
-        y: toCoords.y
+        y: toCoords.y,
       }}
       transition={{
         duration: 0.5,
-        ease: "easeInOut"
+        ease: "easeInOut",
       }}
       onAnimationComplete={onAnimationComplete}
     />

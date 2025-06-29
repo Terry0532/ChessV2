@@ -1,7 +1,7 @@
-import React from 'react';
-import '../index.css';
-import { Theme } from '../helpers/types';
-import AnimatedPiece from './AnimatedPiece';
+import React from "react";
+import "../index.css";
+import { Theme } from "../helpers/types";
+import AnimatedPiece from "./AnimatedPiece";
 
 type BoardProps = {
   squares: any;
@@ -13,24 +13,27 @@ type BoardProps = {
   onAnimationComplete?: () => void;
 };
 
-const Board: React.FC<BoardProps> = ({ 
-  squares, 
-  onClick, 
-  disabled, 
-  rotateBoard, 
+const Board: React.FC<BoardProps> = ({
+  squares,
+  onClick,
+  disabled,
+  rotateBoard,
   theme,
   animatingMove,
-  onAnimationComplete
+  onAnimationComplete,
 }) => {
   const isEven = (num: number) => {
     return num % 2 === 0;
   };
 
   const renderSquare = (i: number, squareShade: string) => {
-    const squareStyle = animatingMove && (i === animatingMove.from) 
-      ? { ...squares[i].style, backgroundImage: 'none' } 
-      : (squares[i] ? squares[i].style : null);
-    
+    const squareStyle =
+      animatingMove && i === animatingMove.from
+        ? { ...squares[i].style, backgroundImage: "none" }
+        : squares[i]
+        ? squares[i].style
+        : null;
+
     return (
       <div key={i} className="button">
         <button
@@ -48,11 +51,17 @@ const Board: React.FC<BoardProps> = ({
   for (let i = 0; i < 8; i++) {
     const squareRows = [];
     for (let j = 0; j < 8; j++) {
-      const squareShade = (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j)) 
-        ? `light-square ${ theme }` : `dark-square ${ theme }`;
-      squareRows.push(renderSquare((i * 8) + j, squareShade));
+      const squareShade =
+        (isEven(i) && isEven(j)) || (!isEven(i) && !isEven(j))
+          ? `light-square ${theme}`
+          : `dark-square ${theme}`;
+      squareRows.push(renderSquare(i * 8 + j, squareShade));
     }
-    board.push(<div key={i} className="board-row" data-testid={"board-row-" + i}>{squareRows}</div>);
+    board.push(
+      <div key={i} className="board-row" data-testid={"board-row-" + i}>
+        {squareRows}
+      </div>
+    );
   }
 
   return (

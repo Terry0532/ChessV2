@@ -2,7 +2,7 @@ import { Player } from "../helpers/types";
 
 export default class Piece {
   player: Player;
-  style: { backgroundImage: string; backgroundColor: string; };
+  style: { backgroundImage: string; backgroundColor: string };
 
   constructor(player: Player, iconUrl: string) {
     this.player = player;

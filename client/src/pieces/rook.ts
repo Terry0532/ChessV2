@@ -1,17 +1,15 @@
-import { ChessPiece, Player } from '../helpers/types';
-import Piece from './piece';
+import { ChessPiece, Player } from "../helpers/types";
+import Piece from "./piece";
 
 export default class Rook extends Piece {
   name: ChessPiece;
 
   constructor(player: Player) {
     super(
-      player, 
-      (
-        player === Player.White
-          ? "https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg" 
-          : "https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg"
-      )
+      player,
+      player === Player.White
+        ? "https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg"
+        : "https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg"
     );
     this.name = ChessPiece.Rook;
   }
@@ -29,18 +27,18 @@ export default class Rook extends Piece {
     while (up) {
       if (temp - 8 > -1) {
         if (squares[temp - 8] === null) {
-          highLightMoves.push((temp - 8));
+          highLightMoves.push(temp - 8);
           temp = temp - 8;
         } else if (squares[temp - 8].player === 2 && this.player === 1) {
-          highLightMoves.push((temp - 8));
+          highLightMoves.push(temp - 8);
           temp = temp - 8;
           up = false;
         } else if (squares[temp - 8].player === 1 && this.player === 2) {
-          highLightMoves.push((temp - 8));
+          highLightMoves.push(temp - 8);
           temp = temp - 8;
           up = false;
         } else {
-          up = false
+          up = false;
         }
       } else {
         up = false;
@@ -49,18 +47,18 @@ export default class Rook extends Piece {
     while (down) {
       if (temp2 + 8 < 64) {
         if (squares[temp2 + 8] === null) {
-          highLightMoves.push((temp2 + 8));
+          highLightMoves.push(temp2 + 8);
           temp2 = temp2 + 8;
         } else if (squares[temp2 + 8].player === 2 && this.player === 1) {
-          highLightMoves.push((temp2 + 8));
+          highLightMoves.push(temp2 + 8);
           temp2 = temp2 + 8;
           down = false;
         } else if (squares[temp2 + 8].player === 1 && this.player === 2) {
-          highLightMoves.push((temp2 + 8));
+          highLightMoves.push(temp2 + 8);
           temp2 = temp2 + 8;
           down = false;
         } else {
-          down = false
+          down = false;
         }
       } else {
         down = false;
@@ -71,14 +69,14 @@ export default class Rook extends Piece {
         left = false;
       } else {
         if (squares[temp3 - 1] === null) {
-          highLightMoves.push((temp3 - 1));
+          highLightMoves.push(temp3 - 1);
           temp3 = temp3 - 1;
         } else if (squares[temp3 - 1].player === 2 && this.player === 1) {
-          highLightMoves.push((temp3 - 1));
+          highLightMoves.push(temp3 - 1);
           temp3 = temp3 - 1;
           left = false;
         } else if (squares[temp3 - 1].player === 1 && this.player === 2) {
-          highLightMoves.push((temp3 - 1));
+          highLightMoves.push(temp3 - 1);
           temp3 = temp3 - 1;
           left = false;
         } else {
@@ -91,14 +89,14 @@ export default class Rook extends Piece {
         right = false;
       } else {
         if (squares[temp4 + 1] === null) {
-          highLightMoves.push((temp4 + 1));
+          highLightMoves.push(temp4 + 1);
           temp4 = temp4 + 1;
         } else if (squares[temp4 + 1].player === 2 && this.player === 1) {
-          highLightMoves.push((temp4 + 1));
+          highLightMoves.push(temp4 + 1);
           temp4 = temp4 + 1;
           right = false;
         } else if (squares[temp4 + 1].player === 1 && this.player === 2) {
-          highLightMoves.push((temp4 + 1));
+          highLightMoves.push(temp4 + 1);
           temp4 = temp4 + 1;
           right = false;
         } else {

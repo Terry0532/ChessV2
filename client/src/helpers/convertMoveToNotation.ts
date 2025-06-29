@@ -1,57 +1,54 @@
 import { getAllPossibleMoves } from "./chessGameLogic";
 import { ChessPiece } from "./types";
 
-const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
 const getSquareNotation = (index: number, onlyFile: boolean = false): string => {
   const row = Math.floor(index / 8);
   const col = index % 8;
   const file = files[col];
   const rank = 8 - row;
-  return `${ file }${ !onlyFile ? rank : "" }`;
+  return `${file}${!onlyFile ? rank : ""}`;
 };
 
 const getPieceNotation = (name: string): string => {
-  switch(name) {
+  switch (name) {
     case ChessPiece.King:
-      return 'K';
+      return "K";
     case ChessPiece.Bishop:
-      return 'B';
+      return "B";
     case ChessPiece.Knight:
-      return 'N';
+      return "N";
     case ChessPiece.Queen:
-      return 'Q';
+      return "Q";
     case ChessPiece.Rook:
-      return 'R';
+      return "R";
     default:
-      return '';
+      return "";
   }
 };
 
 export const convertMoveToNotation = (
-  from: number, 
-  to: number, 
-  oldBoard: any, 
-  canEnpassant: boolean, 
-  turn: string, 
-  nextPlayerValidatedMoves: number[], 
+  from: number,
+  to: number,
+  oldBoard: any,
+  canEnpassant: boolean,
+  turn: string,
+  nextPlayerValidatedMoves: number[],
   newBoard: any,
   isPormotion: boolean
 ): string => {
-  if (oldBoard[from].name === ChessPiece.King && (Math.abs(to - from) === 2)) {
+  if (oldBoard[from].name === ChessPiece.King && Math.abs(to - from) === 2) {
     if (turn === "white") {
       if (to === 62) {
         return "0-0";
-      }
-      else {
+      } else {
         return "0-0-0";
       }
-    }
-    else {
+    } else {
       if (to === 2) {
         return "0-0-0";
-      }
-      else {
+      } else {
         return "0-0";
       }
     }
@@ -60,11 +57,13 @@ export const convertMoveToNotation = (
   let toSquare = getSquareNotation(to);
   let pieceNotation = getPieceNotation(oldBoard[from].name);
 
-  if ((oldBoard[to].name || canEnpassant) && oldBoard[from].name === ChessPiece.Pawn) {
+  if (
+    (oldBoard[to].name || canEnpassant) &&
+    oldBoard[from].name === ChessPiece.Pawn
+  ) {
     pieceNotation += getSquareNotation(from, true);
     pieceNotation += "x";
-  }
-  else if (oldBoard[to].name) {
+  } else if (oldBoard[to].name) {
     pieceNotation += "x";
   }
 
@@ -74,21 +73,19 @@ export const convertMoveToNotation = (
 
   if (nextPlayerValidatedMoves.length === 0) {
     toSquare += "#";
-  }
-  else {
+  } else {
     const allPossibleMoves = getAllPossibleMoves(newBoard, newBoard[to].player);
 
     if (
       allPossibleMoves.some(
-        (index: number) => (
-          (newBoard[index]?.name === ChessPiece.King) 
-          && (newBoard[index].player !== newBoard[to].player)
-        )
+        (index: number) =>
+          newBoard[index]?.name === ChessPiece.King &&
+          newBoard[index].player !== newBoard[to].player
       )
     ) {
       toSquare += "+";
     }
   }
-  
-  return `${ pieceNotation }${ toSquare }`;
+
+  return `${pieceNotation}${toSquare}`;
 };

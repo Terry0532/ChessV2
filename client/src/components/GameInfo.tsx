@@ -1,5 +1,5 @@
 import { GameAction, GameState } from "../helpers/types";
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import FallenSoldierBlock from "./fallensoldiers";
 import { Button } from "react-bootstrap";
 import { getButtonVariant } from "../helpers/chessGameLogic";
@@ -11,21 +11,28 @@ type GameInfoPorps = {
   dispatchGameAction: React.Dispatch<GameAction>;
 };
 
-const GameInfo: React.FC<GameInfoPorps> = ({ gameState, emitGameEvent, dispatchGameAction }) => {
+const GameInfo: React.FC<GameInfoPorps> = ({
+  gameState,
+  emitGameEvent,
+  dispatchGameAction,
+}) => {
   const { getSuggestion, loading: aiLoading, error } = useChessAI();
   const [totalHelpCount, setTotalHelpCount] = useState<number>(0);
   const maxHelpCount = 3;
-  
+
   const newGame = () => {
     if (gameState.offlineMode) {
-      dispatchGameAction(["nextGameData", {
-        rotateBoard: "", gameId: null, gameData: null
-      }]);
-    }
-    else if (gameState.continueGame) {
+      dispatchGameAction([
+        "nextGameData",
+        {
+          rotateBoard: "",
+          gameId: null,
+          gameData: null,
+        },
+      ]);
+    } else if (gameState.continueGame) {
       emitGameEvent("newGame", { askOpponent: true });
-    }
-    else {
+    } else {
       emitGameEvent("newGame", { askOpponent: false });
       dispatchGameAction(["newGame"]);
     }
@@ -52,18 +59,16 @@ const GameInfo: React.FC<GameInfoPorps> = ({ gameState, emitGameEvent, dispatchG
       if (totalHelpCount < maxHelpCount) {
         if (aiLoading) {
           dispatchGameAction(["updateSuggestion", "AI is thinking..."]);
-        }
-        else {
+        } else {
           setTotalHelpCount(totalHelpCount + 1);
           const suggestion = await getSuggestion(gameState.moves);
           dispatchGameAction(["updateSuggestion", "Suggestion: " + suggestion]);
         }
-      }
-      else {
+      } else {
         dispatchGameAction(["updateSuggestion", "Max help count reached"]);
       }
     } catch (error) {
-      console.error('Failed to get AI suggestion:', error);
+      console.error("Failed to get AI suggestion:", error);
     }
   };
 
@@ -80,10 +85,7 @@ const GameInfo: React.FC<GameInfoPorps> = ({ gameState, emitGameEvent, dispatchG
         {gameState.notation}
       </p>
       <p className={gameState.theme}>{gameState.suggestion || error}</p>
-      <div
-        className={"game-status " + gameState.theme}
-        data-testid="game-status"
-      >
+      <div className={"game-status " + gameState.theme} data-testid="game-status">
         {gameState.status}
       </div>
       <div className="fallen-soldier-block">
@@ -133,7 +135,9 @@ const GameInfo: React.FC<GameInfoPorps> = ({ gameState, emitGameEvent, dispatchG
           variant={getButtonVariant(gameState.theme)}
           style={{ marginLeft: 5 }}
         >
-          {aiLoading ? "Loading..." : (`Suggestion (${totalHelpCount}/${maxHelpCount})`)}
+          {aiLoading
+            ? "Loading..."
+            : `Suggestion (${totalHelpCount}/${maxHelpCount})`}
         </Button>
       )}
     </div>
