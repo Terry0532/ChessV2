@@ -1,16 +1,33 @@
-<!-- ## Link
-[Online Chess](https://warm-brushlands-64673.herokuapp.com)
+## Link
+
+[Online Chess](https://chessv2.onrender.com)
 
 ## Screenshots
-Start game
 
-![Screenshot](images/screenshot1.gif)
+Select game mode
 
-New game
+![Screenshot](images/mode_selection.png)
 
-![Screenshot](images/screenshot2.gif)
+Login page
 
-Leave game
+![Screenshot](images/login.png)
 
+Sign up page
 
-![Screenshot](images/screenshot3.gif) -->
+![Screenshot](images/signup.png)
+
+Offline mode
+
+![Screenshot](images/offline_mode_suggestion.gif)
+
+Online game lobby
+
+![Screenshot](images/online_mode_lobby.png)
+
+Online game
+
+![Screenshot](images/online_mode.png)
+
+---
+
+[⬆️ Back to top](#link)
