@@ -8,16 +8,22 @@ const io = require("socket.io")(server, {
   },
 });
 const PORT = process.env.PORT || 4445;
-const HOST = "127.0.0.1";
 
 app.use(express.static(path.join(__dirname, "client", "build")));
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });
 
-// server.listen(PORT, "0.0.0.0");
-server.listen(PORT);
-// server.listen(4444, process.env.OPENSHIFT_NODEJS_IP || process.env.IP || '127.0.0.1')
-console.log("listening to port : " + PORT);
+server.listen(PORT, () => {
+  console.log("listening to port : " + PORT);
+});
+
+process.on("SIGINT", () => {
+  console.log("\nReceived SIGINT. Closing server...");
+  server.close(() => {
+    console.log("Server closed.");
+    process.exit(0);
+  });
+});
 
 require("./socket")(io);

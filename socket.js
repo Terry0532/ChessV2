@@ -8,11 +8,32 @@ admin.initializeApp({
   databaseURL: process.env.DATABASE_URL,
 });
 
+// const redisClient = redis.createClient({
+//   host: process.env.REDIS_HOST || "localhost",
+//   port: process.env.REDIS_PORT || 6379,
+//   password: process.env.REDIS_PASSWORD || undefined,
+// });
 const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST || "localhost",
-  port: process.env.REDIS_PORT || 6379,
-  password: process.env.REDIS_PASSWORD || undefined,
+  username: process.env.REDIS_USERNAME || "default",
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+  },
 });
+
+// Test Redis connection
+// redisClient
+//   .connect()
+//   .then(async () => {
+//     console.log("Connected to Redis Cloud");
+
+//     // Test set/get
+//     await redisClient.set("test", "Hello Redis Cloud!");
+//     const value = await redisClient.get("test");
+//     console.log("Redis test value:", value);
+//   })
+//   .catch(console.error);
 
 redisClient.on("error", (err) => {
   console.error("Redis Client Error", err);
@@ -371,3 +392,29 @@ module.exports = (io) => {
     });
   };
 };
+
+process.on("SIGINT", async () => {
+  console.log("\nReceived SIGINT. Graceful shutdown...");
+
+  try {
+    await redisClient.quit();
+    console.log("Redis client disconnected.");
+  } catch (error) {
+    console.error("Error during Redis disconnect:", error);
+  }
+
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  console.log("\nReceived SIGTERM. Graceful shutdown...");
+
+  try {
+    await redisClient.quit();
+    console.log("Redis client disconnected.");
+  } catch (error) {
+    console.error("Error during Redis disconnect:", error);
+  }
+
+  process.exit(0);
+});

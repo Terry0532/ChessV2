@@ -171,7 +171,6 @@ button.dark {
   color: #e0e0e0;
 }
 
-/* Rotate file labels when board is rotated */
 .file-label.rotate {
   transform: rotate(180deg);
 }
