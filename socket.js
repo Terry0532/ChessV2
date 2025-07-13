@@ -324,6 +324,7 @@ module.exports = (io) => {
         io.sockets.connected[data.userId].leave(data.gameId);
         io.sockets.connected[opponentId].leave(data.gameId);
 
+        await admin.database().ref(`liveGames/${data.gameId}`).remove();
         await deleteGameData(data.gameId);
         await deletePlayerInGame(data.userId);
         await deletePlayerInGame(opponentId);

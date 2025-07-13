@@ -281,7 +281,6 @@ export const gameReducer = (gameState: GameState, gameAction: GameAction) => {
     case "gameStartConfirmation":
       let disabled = gameState.disabled;
       let rotateBoard = gameState.rotateBoard;
-      console.log(newValue);
 
       if (newValue.game_data.whose_turn !== gameState.userId) {
         disabled = true;
