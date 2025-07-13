@@ -1,7 +1,13 @@
 import socketIOClient from "socket.io-client";
 
-const url = process.env.NODE_ENV === "test" ? "" : "http://127.0.0.1:4445";
-// "undefined" means the URL will be computed from the `window.location` object
-const URL = "http://127.0.0.1:4445";
+const getServerURL = () => {
+  if (process.env.NODE_ENV === "development") {
+    return "http://127.0.0.1:4445";
+  }
+  // In production, connect to the same origin (Render domain)
+  return window.location.origin;
+};
+
+const URL = getServerURL();
 
 export const socket = socketIOClient(URL, { autoConnect: false });
