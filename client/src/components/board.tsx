@@ -40,7 +40,7 @@ const Board: React.FC<BoardProps> = ({
           className={"square " + squareShade + " " + rotateBoard}
           onClick={() => onClick(i)}
           style={squareStyle}
-          disabled={disabled}
+          disabled={disabled ? disabled : squareStyle === null ? true : false}
           data-testid={"board-square-" + i}
         ></button>
       </div>
