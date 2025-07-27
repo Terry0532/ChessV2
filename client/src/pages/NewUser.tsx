@@ -235,15 +235,17 @@ const NewUser: React.FC<NewUserProps> = ({
               {errorMessage && <p className={theme}>{errorMessage}</p>}
             </Form.Group>
           </Form>
-          <Button
-            onClick={(e) => handleAuth(e, true)}
-            variant={getButtonVariant(theme)}
-            type="submit"
-            style={{ marginTop: 5 }}
-            disabled={isLoading}
-          >
-            {buttonText("Log in with google")}
-          </Button>
+          {!isRegistering && (
+            <Button
+              onClick={(e) => handleAuth(e, true)}
+              variant={getButtonVariant(theme)}
+              type="submit"
+              style={{ marginTop: 5 }}
+              disabled={isLoading}
+            >
+              {buttonText("Log in with google")}
+            </Button>
+          )}
         </div>
       )}
     </div>
