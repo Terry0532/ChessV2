@@ -152,6 +152,21 @@ const NewUser: React.FC<NewUserProps> = ({
       )}
       {gameMode === GameMode.Online && (
         <div>
+          <Button
+            onClick={() => {
+              if (gameMode === GameMode.Online && !isRegistering) {
+                setGameMode(undefined);
+              } else if (isRegistering) {
+                setIsRegistering(false);
+              }
+            }}
+            variant={getButtonVariant(theme)}
+            type="submit"
+            style={{ marginTop: 5 }}
+            disabled={isLoading}
+          >
+            {buttonText("Back")}
+          </Button>
           <Form
             onSubmit={(e) => handleAuth(e, false)}
             data-testid="enter-username-form"
