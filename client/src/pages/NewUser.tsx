@@ -243,7 +243,7 @@ const NewUser: React.FC<NewUserProps> = ({
                     style={{ marginLeft: 5 }}
                     disabled={isLoading}
                   >
-                    Sign up
+                    {buttonText("Sign up")}
                   </Button>
                 </div>
               )}
