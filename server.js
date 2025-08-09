@@ -26,4 +26,4 @@ process.on("SIGINT", () => {
   });
 });
 
-require("./socket")(io);
+require("./src/socket")(io);

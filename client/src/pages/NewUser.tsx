@@ -67,7 +67,6 @@ const NewUser: React.FC<NewUserProps> = ({
       result = await createUserWithEmail(email, password, displayName);
     } else if (useGoogle) {
       result = await signInWithGoogle();
-      console.log(result);
     } else {
       result = await signInWithEmail(email, password);
     }
