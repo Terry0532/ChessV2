@@ -8,11 +8,6 @@ admin.initializeApp({
   databaseURL: process.env.DATABASE_URL,
 });
 
-// const redisClient = redis.createClient({
-//   host: process.env.REDIS_HOST || "localhost",
-//   port: process.env.REDIS_PORT || 6379,
-//   password: process.env.REDIS_PASSWORD || undefined,
-// });
 const redisClient = redis.createClient({
   username: process.env.REDIS_USERNAME || "default",
   password: process.env.REDIS_PASSWORD,
@@ -21,19 +16,6 @@ const redisClient = redis.createClient({
     port: process.env.REDIS_PORT,
   },
 });
-
-// Test Redis connection
-// redisClient
-//   .connect()
-//   .then(async () => {
-//     console.log("Connected to Redis Cloud");
-
-//     // Test set/get
-//     await redisClient.set("test", "Hello Redis Cloud!");
-//     const value = await redisClient.get("test");
-//     console.log("Redis test value:", value);
-//   })
-//   .catch(console.error);
 
 redisClient.on("error", (err) => {
   console.error("Redis Client Error", err);

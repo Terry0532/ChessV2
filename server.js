@@ -10,7 +10,7 @@ const io = require("socket.io")(server, {
 const PORT = process.env.PORT || 4445;
 
 app.use(express.static(path.join(__dirname, "client", "build")));
-app.get("*", (req, res) => {
+app.get("*", (_req, res) => {
   res.sendFile(path.join(__dirname, "client", "build", "index.html"));
 });
 
