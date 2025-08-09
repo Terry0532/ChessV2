@@ -10,6 +10,7 @@ import {
   Unsubscribe,
 } from "firebase/database";
 import { getCurrentUser } from "../firebase/auth";
+import { getUserPlayHistory } from "../firebase/firestore";
 
 type ShowUsersProps = {
   socket: any;
@@ -23,6 +24,9 @@ const ShowUsers: React.FC<ShowUsersProps> = ({
   gameState,
 }) => {
   const [opponents, setOpponents] = useState<Opponent[]>([]);
+  const [loadingPlayHistory, setLoadingPlayHistory] = useState<Set<string>>(
+    new Set()
+  );
 
   const selectOpponent = (index: number) => {
     socket.emit("selectOpponent", {
@@ -30,6 +34,28 @@ const ShowUsers: React.FC<ShowUsersProps> = ({
       uid: opponents[index].uid,
       myUid: getCurrentUser().uid,
     });
+  };
+
+  const fetchAndUpdatePlayHistory = async (uid: string) => {
+    setLoadingPlayHistory((prev) => new Set(prev).add(uid));
+
+    try {
+      const playHistory = await getUserPlayHistory(uid);
+
+      setOpponents((prev) =>
+        prev.map((opponent) =>
+          opponent.uid === uid ? { ...opponent, ...playHistory } : opponent
+        )
+      );
+    } catch (error) {
+      console.error(`Error fetching play history for ${uid}:`, error);
+    } finally {
+      setLoadingPlayHistory((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(uid);
+        return newSet;
+      });
+    }
   };
 
   useEffect(() => {
@@ -47,24 +73,25 @@ const ShowUsers: React.FC<ShowUsersProps> = ({
     const listeners: Unsubscribe[] = [];
     const currentUser = getCurrentUser();
 
-    const addedUnsubscribe = onChildAdded(statusRef, (snapshot) => {
+    const addedUnsubscribe = onChildAdded(statusRef, async (snapshot) => {
       const uid = snapshot.key;
       const user = snapshot.val() as UserStatus;
 
       if (uid !== currentUser.uid && user.state === "online" && user.socketId) {
         setOpponents((prev) => {
           if (!prev.some((opponent) => opponent.uid === uid)) {
-            return [
-              ...prev,
-              {
-                uid,
-                socketId: user.socketId,
-                name: user.displayName,
-                played: 0,
-                won: 0,
-                draw: 0,
-              },
-            ];
+            const newOpponent = {
+              uid,
+              socketId: user.socketId,
+              name: user.displayName,
+              played: 0,
+              won: 0,
+              draw: 0,
+            };
+
+            fetchAndUpdatePlayHistory(uid);
+
+            return [...prev, newOpponent];
           }
           return prev;
         });
@@ -91,21 +118,23 @@ const ShowUsers: React.FC<ShowUsersProps> = ({
             };
             return updated;
           } else {
-            return [
-              ...prev,
-              {
-                uid,
-                socketId: user.socketId,
-                name: user.displayName,
-                played: 0,
-                won: 0,
-                draw: 0,
-              },
-            ];
+            const newOpponent = {
+              uid,
+              socketId: user.socketId,
+              name: user.displayName,
+              played: 0,
+              won: 0,
+              draw: 0,
+            };
+
+            fetchAndUpdatePlayHistory(uid);
+
+            return [...prev, newOpponent];
           }
         } else if (user.state === "offline") {
           return prev.filter((opponent) => opponent.uid !== uid);
         }
+        return prev;
       });
     });
     listeners.push(changedUnsubscribe);
@@ -129,6 +158,7 @@ const ShowUsers: React.FC<ShowUsersProps> = ({
       </h2>
       <ListGroup>
         {opponents.map(function (opponent, index) {
+          const isLoading = loadingPlayHistory.has(opponent.uid);
           return (
             <ListGroup.Item
               onClick={() => selectOpponent(index)}
@@ -140,8 +170,12 @@ const ShowUsers: React.FC<ShowUsersProps> = ({
               key={index}
               data-testid={"opponent-" + index}
             >
-              {opponent.name} | Played : {opponent.played} | Won : {opponent.won} |
-              Draw : {opponent.draw}
+              {opponent.name} |
+              {isLoading
+                ? "Loading stats..."
+                : `Played: ${opponent.played || 0} | Won: ${
+                    opponent.won || 0
+                  } | Draw: ${opponent.draw || 0} | Lost: ${opponent.lost || 0}`}
             </ListGroup.Item>
           );
         })}

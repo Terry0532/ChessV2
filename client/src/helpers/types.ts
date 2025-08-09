@@ -157,9 +157,10 @@ export type Opponent = {
   uid: string;
   socketId: string;
   name: string;
-  played: number;
-  won: number;
-  draw: number;
+  played?: number;
+  won?: number;
+  draw?: number;
+  lost?: number;
 };
 
 export type UserStatus = {
