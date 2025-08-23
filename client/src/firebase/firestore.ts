@@ -1,4 +1,13 @@
-import { doc, getDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  or,
+  query,
+  Timestamp,
+  where,
+} from "firebase/firestore";
 import { db } from "./config";
 
 export interface UserPlayHistory {
@@ -6,6 +15,16 @@ export interface UserPlayHistory {
   won: number;
   draw: number;
   lost: number;
+}
+
+export interface ArchivedGame {
+  id: string;
+  blackPlayer: string;
+  whitePlayer: string;
+  finishedAt: Timestamp;
+  moves: string[];
+  result: string;
+  startedAt: number;
 }
 
 export const getUserPlayHistory = async (uid: string): Promise<UserPlayHistory> => {
@@ -37,6 +56,29 @@ export const getUserPlayHistory = async (uid: string): Promise<UserPlayHistory> 
       draw: 0,
       lost: 0,
     };
+  }
+};
+
+export const getUserGameHistory = async (uid: string) => {
+  try {
+    const q = query(
+      collection(db, "archivedGames"),
+      or(where("blackPlayer", "==", uid), where("whitePlayer", "==", uid))
+    );
+    const querySnapshot = await getDocs(q);
+    const games: ArchivedGame[] = [];
+
+    querySnapshot.forEach((doc) => {
+      games.push({
+        id: doc.id,
+        ...doc.data(),
+      } as ArchivedGame);
+    });
+
+    return games;
+  } catch (error) {
+    console.error("Error fetching user game history:", error);
+    return [];
   }
 };
 

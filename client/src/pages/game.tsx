@@ -18,6 +18,8 @@ import {
 import GameInfo from "../components/GameInfo";
 import { createSocketEventHandlers } from "../helpers/socketEventHandlers";
 import ChessIconsCredit from "../components/ChessIconsCredit";
+import { getUserGameHistory, ArchivedGame } from "../firebase/firestore";
+import GameHistoryModal from "../components/GameHistoryModal";
 
 const Game = ({ socket }: { socket: Socket }) => {
   const [gameState, dispatchGameAction] = useReducer(gameReducer, initialGameState);
@@ -30,6 +32,22 @@ const Game = ({ socket }: { socket: Socket }) => {
     to: number;
     piece: any;
   } | null>(null);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [gameHistory, setGameHistory] = useState<ArchivedGame[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  const handleShowHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const games = await getUserGameHistory(currentUser.uid);
+      setGameHistory(games);
+      setShowHistoryModal(true);
+    } catch (error) {
+      console.error("Error fetching game history:", error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
 
   const emitGameEvent = (event: string, additionalData = {}) => {
     const payload = {
@@ -278,21 +296,37 @@ const Game = ({ socket }: { socket: Socket }) => {
         </Button>
       </ButtonGroup>
       {currentUser && (
-        <Button
-          variant={gameState.theme}
-          onClick={() => {
-            signOutUser();
-            if (socket.connected) {
-              socket.disconnect();
-            }
-            // leaveGame();
-            dispatchGameAction(["registrationConfirmation", false]);
-          }}
-          style={{ marginTop: 5 }}
-        >
-          Log Out
-        </Button>
+        <>
+          <Button
+            variant={gameState.theme}
+            onClick={() => {
+              signOutUser();
+              if (socket.connected) {
+                socket.disconnect();
+              }
+              // leaveGame();
+              dispatchGameAction(["registrationConfirmation", false]);
+            }}
+            style={{ marginTop: 20, marginLeft: 5 }}
+          >
+            Log Out
+          </Button>
+          <Button
+            variant={gameState.theme}
+            onClick={handleShowHistory}
+            style={{ marginTop: 20, marginLeft: 5 }}
+            disabled={loadingHistory}
+          >
+            {loadingHistory ? "Loading..." : "History"}
+          </Button>
+        </>
       )}
+      <GameHistoryModal
+        show={showHistoryModal}
+        onHide={() => setShowHistoryModal(false)}
+        gameHistory={gameHistory}
+        currentUserUid={currentUser?.uid || ""}
+      />
     </div>
   );
 };
