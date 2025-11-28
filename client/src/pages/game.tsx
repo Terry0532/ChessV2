@@ -165,7 +165,6 @@ const Game = ({ socket }: { socket: Socket }) => {
   };
 
   const changeTheme = (theme: Theme) => {
-    dispatchGameAction(["changeTheme", theme]);
     updateTheme(theme);
 
     if (theme === Theme.Dark) {
@@ -176,6 +175,8 @@ const Game = ({ socket }: { socket: Socket }) => {
   };
 
   const handleThemeChange = (isDark: boolean) => {
+    dispatchGameAction(["changeTheme", isDark ? Theme.Dark : Theme.Light]);
+
     if (isDark) {
       setThemeButtonVariant("dark");
       document.body.classList.add("dark-mode");
@@ -204,9 +205,7 @@ const Game = ({ socket }: { socket: Socket }) => {
   }, [gameState]);
 
   useEffect(() => {
-    if (!loading && theme !== gameState.theme) {
-      changeTheme(theme);
-    }
+    if (loading) return;
 
     if (theme === Theme.System) {
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
@@ -216,6 +215,8 @@ const Game = ({ socket }: { socket: Socket }) => {
       handleThemeChange(mediaQuery.matches);
       mediaQuery.addEventListener("change", systemThemeListener);
       return () => mediaQuery.removeEventListener("change", systemThemeListener);
+    } else if (theme !== gameState.theme) {
+      handleThemeChange(theme === Theme.Dark);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [theme, loading]);
@@ -275,21 +276,21 @@ const Game = ({ socket }: { socket: Socket }) => {
       <ButtonGroup className="theme-selector">
         <Button
           variant={themeButtonVariant}
-          active={gameState.theme === Theme.Light}
+          active={theme === Theme.Light}
           onClick={() => changeTheme(Theme.Light)}
         >
           Light Mode
         </Button>
         <Button
           variant={themeButtonVariant}
-          active={gameState.theme === Theme.Dark}
+          active={theme === Theme.Dark}
           onClick={() => changeTheme(Theme.Dark)}
         >
           Dark Mode
         </Button>
         <Button
           variant={themeButtonVariant}
-          active={gameState.theme === Theme.System}
+          active={theme === Theme.System}
           onClick={() => changeTheme(Theme.System)}
         >
           Follow System
