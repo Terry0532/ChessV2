@@ -58,7 +58,7 @@ class SocketHandlers {
           blackPlayerId,
           blackPlayerUid,
           setPlayerInGame,
-          setGameData
+          setGameData,
         );
 
         this.io.sockets.connected[whitePlayerId].join(gameId);
@@ -132,14 +132,14 @@ class SocketHandlers {
       const previousGameData = await getAndRemoveGameFromRTDB(
         data.gameId,
         getPlayerInGame,
-        gameData
+        gameData,
       );
 
       if (previousGameData) {
         await updateUserPlayHistory(
           previousGameData.whitePlayer,
           previousGameData.blackPlayer,
-          data.result
+          data.result,
         );
       }
 
@@ -178,7 +178,7 @@ class SocketHandlers {
             gameData.player1,
             player2Data.uid,
             setPlayerInGame,
-            setGameData
+            setGameData,
           );
 
         this.io.sockets.connected[gameData.player1].join(newGameId);
@@ -216,7 +216,7 @@ class SocketHandlers {
       const previousGameData = await getAndRemoveGameFromRTDB(
         data.gameId,
         getPlayerInGame,
-        gameData
+        gameData,
       );
 
       if (previousGameData) {
@@ -226,7 +226,7 @@ class SocketHandlers {
         await updateUserPlayHistory(
           previousGameData.whitePlayer,
           previousGameData.blackPlayer,
-          result
+          result,
         );
       }
 
@@ -270,6 +270,19 @@ class SocketHandlers {
     } catch (error) {
       console.error("Error in updateNotation:", error);
     }
+  }
+
+  async handleDraw(data) {
+    const gameData = await getGameData(data.gameId);
+    if (!gameData) {
+      console.error("Game not found:", data.gameId);
+      // client.emit('error', { message: 'Game not found' });
+      return;
+    }
+
+    this.io
+      .to(getOpponentId(data.userId, gameData))
+      .emit("askOpponentDraw", {});
   }
 }
 

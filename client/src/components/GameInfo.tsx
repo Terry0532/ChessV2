@@ -50,7 +50,6 @@ const GameInfo: React.FC<GameInfoPorps> = ({
   };
 
   const drawButton = () => {
-    dispatchGameAction(["gameResult", "Draw"]);
     emitGameEvent("askDraw");
   };
 

@@ -257,6 +257,13 @@ export const createSocketEventHandlers = ({
     dispatchGameAction(["updateNotation", data.move]);
   };
 
+  const draw = () => {
+    if (window.confirm("Draw?")) {
+      emitGameEvent("gameResult", { result: "Draw" });
+      dispatchGameAction(["gameResult", "Draw"]);
+    }
+  };
+
   const setupEventListeners = () => {
     socket.on("connected", onConnect);
     socket.on("updateGameData", updateGameData);
@@ -267,6 +274,7 @@ export const createSocketEventHandlers = ({
     socket.on("toLobby", toLobby);
     socket.on("disconnect", onDisconnect);
     socket.on("updateNotation", updateNotation);
+    socket.on("askOpponentDraw", draw);
   };
 
   const cleanupEventListeners = () => {
@@ -279,6 +287,7 @@ export const createSocketEventHandlers = ({
     socket.off("toLobby", toLobby);
     socket.off("disconnect", onDisconnect);
     socket.off("updateNotation", onDisconnect);
+    socket.off("askOpponentDraw", draw);
   };
 
   return { setupEventListeners, cleanupEventListeners };

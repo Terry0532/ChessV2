@@ -10,13 +10,14 @@ module.exports = (io) => {
 
     client.on("disconnect", () => handlers.handleDisconnect(client));
     client.on("selectOpponent", (data) =>
-      handlers.handleSelectOpponent(client, data)
+      handlers.handleSelectOpponent(client, data),
     );
     client.on("moves", (data) => handlers.handleMoves(data));
     client.on("gameResult", (data) => handlers.handleGameResult(data));
     client.on("newGame", (data) => handlers.handleNewGame(data));
     client.on("leaveGame", (data) => handlers.handleLeaveGame(data));
     client.on("updateNotation", (data) => handlers.handleUpdateNotation(data));
+    client.on("askDraw", (data) => handlers.handleDraw(data));
   });
 };
 
